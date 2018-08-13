@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "typescript-to-lua": "^0.7.0"
   },
   "prettier": {
     "printWidth": 60,
