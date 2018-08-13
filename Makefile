@@ -1,5 +1,3 @@
-TSTL = ./node_modules/typescript-to-lua/dist/index.js
-
 # Build final cart.
 game.p8: game.lua
 	@echo 'pico-8 cartridge // http://www.pico-8.com' > game.p8
@@ -10,7 +8,7 @@ game.p8: game.lua
 
 # Transpile TypeScript to Lua.
 game.lua: game.ts
-	@$(TSTL) -p tsconfig.json
+	@./node_modules/.bin/tstl -p tsconfig.json
 
 # Remove generated files.
 clean:
