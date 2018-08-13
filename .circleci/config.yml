@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: npm install --no-bin-links
+          command: npm install
       - run:
           name: where my node modules
           command: ls && ls node_modules/typescript-to-lua && ls node_modules/typescript-to-lua/dist
