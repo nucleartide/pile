@@ -10,10 +10,7 @@ jobs:
           command: npm install --no-bin-links
       - run:
           name: where my node modules
-          command:
-            - ls
-            - ls node_modules/typescript-to-lua
-            - ls node_modules/typescript-to-lua/dist
+          command: ls && ls node_modules/typescript-to-lua && ls node_modules/typescript-to-lua/dist
       - run:
           name: Ensure game builds
           command: make game.p8
