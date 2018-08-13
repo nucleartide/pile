@@ -9,5 +9,8 @@ jobs:
           name: Install dependencies
           command: npm install --no-bin-links
       - run:
+          name: where my node modules
+          command: ls
+      - run:
           name: Ensure game builds
           command: make game.p8
