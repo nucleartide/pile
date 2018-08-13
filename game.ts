@@ -5,7 +5,6 @@ declare function cls(c: col): void
  */
 
 function _update() {
-  a
 }
 
 function _draw() {
