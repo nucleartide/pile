@@ -4,7 +4,9 @@ declare function cls(c: col): void
  * game loop.
  */
 
-function _update() {}
+function _update() {
+  a
+}
 
 function _draw() {
   cls(col.indigo)
