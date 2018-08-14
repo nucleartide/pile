@@ -135,7 +135,7 @@ function vec3_normalize(v: vec3): void {
   stop()
 }
 
-function vec3_lerp(): void {
+function vec3_lerp() {
   // console.log('test')
 }
 
