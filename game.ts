@@ -1,4 +1,5 @@
 declare function cls(c: col): void
+declare function flr(n: number): number
 
 /**
  * game loop.
@@ -31,4 +32,16 @@ enum col {
   indigo,
   pink,
   peach,
+}
+
+/**
+ * math.
+ */
+
+function round(n: number) {
+  return flr(n + 0.5)
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return (1 - t) * a + t * b
 }
