@@ -7,7 +7,7 @@
     "tslint": "^5.11.0"
   },
   "prettier": {
-    "printWidth": 60,
+    "printWidth": 80,
     "semi": false,
     "trailingComma": "es5",
     "singleQuote": true

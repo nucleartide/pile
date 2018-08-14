@@ -135,12 +135,7 @@ function vec3_normalize(v: vec3): void {
   stop()
 }
 
-function vec3_lerp(
-  out: vec3,
-  a: vec3,
-  b: vec3,
-  t: number
-): void {
+function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
   const ax = a.x,
     ay = a.y,
     az = a.z
@@ -151,5 +146,9 @@ function vec3_lerp(
   out.y = lerp(ay, by, t)
   out.z = lerp(az, bz, t)
 }
+
+;(function(): void {
+  const a = 5
+})()
 
 // function vec3_lerp(): void {}
