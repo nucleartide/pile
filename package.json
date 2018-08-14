@@ -9,7 +9,8 @@
   "prettier": {
     "printWidth": 60,
     "semi": false,
-    "trailingComma": "es5"
+    "trailingComma": "es5",
+    "singleQuote": true
   },
   "husky": {
     "hooks": {
