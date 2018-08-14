@@ -11,7 +11,7 @@ declare function stop(): void
 
 // function _update() {}
 
-function _draw() {
+function _draw(): void {
   cls(col.indigo)
 }
 
@@ -42,7 +42,7 @@ enum col {
  * math.
  */
 
-function round(n: number) {
+function round(n: number): number {
   return flr(n + 0.5)
 }
 
@@ -133,6 +133,10 @@ function vec3_normalize(v: vec3): void {
   vec3_normalize(v)
   print(vec3_magnitude(v))
   stop()
+}
+
+function vec3_lerp(): void {
+  // console.log('test')
 }
 
 // function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {}

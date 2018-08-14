@@ -11,6 +11,12 @@
       true,
       "call-signature",
       "arrow-call-signature"
+    ],
+    "quotemark": [
+      true,
+      "single",
+      "avoid-template",
+      "avoid-escape"
     ]
   },
   "rulesDirectory": []
