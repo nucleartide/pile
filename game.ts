@@ -87,7 +87,7 @@ function vec3_mul(out: vec3, a: vec3, b: vec3): void {
 */
 
 function vec3_print(v: vec3): void {
-  print(v.x + ", " + v.y + ", " + v.z)
+  print(v.x + ', ' + v.y + ', ' + v.z)
 }
 
 function vec3_dot(a: vec3, b: vec3): number {
