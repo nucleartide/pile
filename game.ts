@@ -119,3 +119,11 @@ function vec3_magnitude(v: vec3): number {
   print(vec3_magnitude(vec3(200, 200, 200)))
   stop()
 }
+
+function vec3_normalize(v: vec3) {
+  const m = vec3_magnitude(v)
+  if (m === 0) return
+  v.x /= m
+  v.y /= m
+  v.z /= m
+}
