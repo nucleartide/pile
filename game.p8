@@ -121,3 +121,23 @@ function mat3_rotate_x(m,a)
     m[2+1].y = -sin(a)
     m[2+1].z = cos(a)
 end
+do
+local out = vec3()
+
+local v = vec3(-46,0,-64)
+
+local m = mat3()
+
+mat3_rotate_x(m,0)
+vec3_mul_mat3(out,v,m)
+assert_vec3_equal(out,vec3(-46,0,-64))
+mat3_rotate_x(m,0.25)
+vec3_mul_mat3(out,v,m)
+assert_vec3_equal(out,vec3(-46,64,0))
+mat3_rotate_x(m,0.5)
+vec3_mul_mat3(out,v,m)
+assert_vec3_equal(out,vec3(-46,0,64))
+mat3_rotate_x(m,0.75)
+vec3_mul_mat3(out,v,m)
+assert_vec3_equal(out,vec3(-46,-64,0))
+end

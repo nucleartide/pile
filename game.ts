@@ -196,3 +196,43 @@ function mat3_rotate_x(m: mat3, a: number): void {
   m[2].y = -sin(a)
   m[2].z = cos(a)
 }
+
+{
+  const out = vec3()
+  const v = vec3(-46, 0, -64)
+  const m = mat3()
+
+  mat3_rotate_x(m, 0)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 0, -64))
+
+  mat3_rotate_x(m, 0.25)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 64, 0))
+
+  mat3_rotate_x(m, 0.5)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 0, 64))
+
+  mat3_rotate_x(m, 0.75)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, -64, 0))
+}
+
+/*
+mat3_rotate_y(m, 0)
+vec3_mul_mat3(out, v, m)
+assert_vec3_equal(out, vec3(-46, 0, -64))
+
+mat3_rotate_y(m, 0.25)
+vec3_mul_mat3(out, v, m)
+assert_vec3_equal(out, vec3(-64, 0, 46))
+
+mat3_rotate_y(m, 0.5)
+vec3_mul_mat3(out, v, m)
+assert_vec3_equal(out, vec3(46, 0, 64))
+
+mat3_rotate_y(m, 0.75)
+vec3_mul_mat3(out, v, m)
+assert_vec3_equal(out, vec3(64, 0, -46))
+*/
