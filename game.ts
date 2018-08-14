@@ -120,7 +120,7 @@ function vec3_magnitude(v: vec3): number {
   stop()
 }
 
-function vec3_normalize(v: vec3) {
+function vec3_normalize(v: vec3): void {
   const m = vec3_magnitude(v)
   if (m === 0) return
   v.x /= m
