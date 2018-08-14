@@ -147,8 +147,19 @@ function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
   out.z = lerp(az, bz, t)
 }
 
-;(function(): void {
-  const a = 5
-})()
+type mat3 = [vec3, vec3, vec3]
+
+let vec3_mul_mat3
+{
+  const spare = vec3()
+  vec3_mul_mat3 = function(out: vec3, v: vec3, m: mat3): void {
+    spare.x = v.x
+    spare.y = v.y
+    spare.z = v.z
+    out.x = vec3_dot(spare, m[0])
+    out.y = vec3_dot(spare, m[1])
+    out.z = vec3_dot(spare, m[2])
+  }
+}
 
 // function vec3_lerp(): void {}
