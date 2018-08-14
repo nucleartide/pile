@@ -219,6 +219,8 @@ function mat3_rotate_x(m: mat3, a: number): void {
   assert_vec3_equal(out, vec3(-46, -64, 0))
 }
 
+// set matrix `m` to be a counterclockwise rotation of `a`
+// around the y-axis. assume right-handed coordinates.
 function mat3_rotate_y(m: mat3, a: number): void {
   m[0].x = cos(a)
   m[0].y = 0
