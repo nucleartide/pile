@@ -4,12 +4,13 @@ declare function print(v: string | number): void
 declare function max(a: number, b: number): number
 declare function sqrt(n: number): number
 declare function stop(): void
+declare function assert(b: boolean): void
+declare function sin(n: number): number
+declare function cos(n: number): number
 
 /**
  * game loop.
  */
-
-// function _update() {}
 
 function _draw(): void {
   cls(col.indigo)
@@ -112,13 +113,14 @@ function vec3_magnitude(v: vec3): number {
   return sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 }
 
+/*
 {
   print(vec3_magnitude(vec3(1, 1, 1)))
   print(vec3_magnitude(vec3(2, 2, 2)))
   print(vec3_magnitude(vec3(3, 3, 3)))
   print(vec3_magnitude(vec3(200, 200, 200)))
-  // stop()
 }
+*/
 
 function vec3_normalize(v: vec3): void {
   const m = vec3_magnitude(v)
@@ -128,12 +130,13 @@ function vec3_normalize(v: vec3): void {
   v.z /= m
 }
 
+/*
 {
   const v = vec3(200, 200, 200)
   vec3_normalize(v)
   print(vec3_magnitude(v))
-  stop()
 }
+*/
 
 function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
   const ax = a.x,
@@ -162,4 +165,34 @@ let vec3_mul_mat3
   }
 }
 
-// function vec3_lerp(): void {}
+function assert_vec3_equal(a: vec3, b: vec3): void {
+  assert(a.x === b.x)
+  assert(a.y === b.y)
+  assert(a.z === b.z)
+}
+
+function vec3_zero(v: vec3): void {
+  v.x = 0
+  v.y = 0
+  v.z = 0
+}
+
+function mat3(): mat3 {
+  return [vec3(), vec3(), vec3()]
+}
+
+// set matrix `m` to be a counterclockwise rotation of `a` around the x-axis.
+// assume right-handed coordinates.
+function mat3_rotate_x(m: mat3, a: number): void {
+  m[0].x = 1
+  m[0].y = 0
+  m[0].z = 0
+
+  m[1].x = 0
+  m[1].y = cos(a)
+  m[1].z = sin(a)
+
+  m[2].x = 0
+  m[2].y = -sin(a)
+  m[2].z = cos(a)
+}

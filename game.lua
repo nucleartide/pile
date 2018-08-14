@@ -57,12 +57,6 @@ local z = v.z/m
     end
     return sqrt(((v.x^2)+(v.y^2))+(v.z^2))
 end
-do
-print(vec3_magnitude(vec3(1,1,1)))
-print(vec3_magnitude(vec3(2,2,2)))
-print(vec3_magnitude(vec3(3,3,3)))
-print(vec3_magnitude(vec3(200,200,200)))
-end
 function vec3_normalize(v)
     local m = vec3_magnitude(v)
 
@@ -72,13 +66,6 @@ function vec3_normalize(v)
     v.x = (v.x/m)
     v.y = (v.y/m)
     v.z = (v.z/m)
-end
-do
-local v = vec3(200,200,200)
-
-vec3_normalize(v)
-print(vec3_magnitude(v))
-stop()
 end
 function vec3_lerp(out,a,b,t)
     local ax = a.x
@@ -107,4 +94,28 @@ vec3_mul_mat3 = function(out,v,m)
     out.z = vec3_dot(spare,m[2+1])
 end
 
+end
+function assert_vec3_equal(a,b)
+    assert(a.x==b.x)
+    assert(a.y==b.y)
+    assert(a.z==b.z)
+end
+function vec3_zero(v)
+    v.x = 0
+    v.y = 0
+    v.z = 0
+end
+function mat3()
+    return {vec3(),vec3(),vec3()}
+end
+function mat3_rotate_x(m,a)
+    m[0+1].x = 1
+    m[0+1].y = 0
+    m[0+1].z = 0
+    m[1+1].x = 0
+    m[1+1].y = cos(a)
+    m[1+1].z = sin(a)
+    m[2+1].x = 0
+    m[2+1].y = -sin(a)
+    m[2+1].z = cos(a)
 end
