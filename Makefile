@@ -6,8 +6,13 @@ game.p8: game.lua
 	@echo 'export("game.html")' >> game.p8 # TODO: Replace with script.
 	@cat game.lua | tail -n +3 >> game.p8 # Strip typescript-to-lua comments before appending.
 
+# Run linter.
+lint: game.ts
+	@./node_modules/.bin/tslint -c tslint.json game.ts
+.PHONY: lint
+
 # Transpile TypeScript to Lua.
-game.lua: game.ts
+game.lua: lint
 	@./node_modules/.bin/tstl -p tsconfig.json
 
 # Remove generated files.

@@ -9,7 +9,7 @@ declare function stop(): void
  * game loop.
  */
 
-function _update() {}
+// function _update() {}
 
 function _draw() {
   cls(col.indigo)
@@ -117,7 +117,7 @@ function vec3_magnitude(v: vec3): number {
   print(vec3_magnitude(vec3(2, 2, 2)))
   print(vec3_magnitude(vec3(3, 3, 3)))
   print(vec3_magnitude(vec3(200, 200, 200)))
-  stop()
+  // stop()
 }
 
 function vec3_normalize(v: vec3): void {
@@ -127,3 +127,12 @@ function vec3_normalize(v: vec3): void {
   v.y /= m
   v.z /= m
 }
+
+{
+  const v = vec3(200, 200, 200)
+  vec3_normalize(v)
+  print(vec3_magnitude(v))
+  stop()
+}
+
+// function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {}
