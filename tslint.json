@@ -17,7 +17,8 @@
       "single",
       "avoid-template",
       "avoid-escape"
-    ]
+    ],
+    "one-variable-per-declaration": false
   },
   "rulesDirectory": []
 }

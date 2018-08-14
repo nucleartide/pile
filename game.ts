@@ -103,9 +103,9 @@ function vec3_scale(v: vec3, c: number): void {
 function vec3_magnitude(v: vec3): number {
   if (v.x > 104 || v.y > 104 || v.z > 104) {
     const m = max(max(v.x, v.y), v.z)
-    const x = v.x / m
-    const y = v.y / m
-    const z = v.z / m
+    const x = v.x / m,
+      y = v.y / m,
+      z = v.z / m
     return sqrt(x ** 2 + y ** 2 + z ** 2) * m
   }
 
@@ -135,8 +135,21 @@ function vec3_normalize(v: vec3): void {
   stop()
 }
 
-function vec3_lerp(): void {
-  // console.log('test')
+function vec3_lerp(
+  out: vec3,
+  a: vec3,
+  b: vec3,
+  t: number
+): void {
+  const ax = a.x,
+    ay = a.y,
+    az = a.z
+  const bx = b.x,
+    by = b.y,
+    bz = b.z
+  out.x = lerp(ax, bx, t)
+  out.y = lerp(ay, by, t)
+  out.z = lerp(az, bz, t)
 }
 
-// function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {}
+// function vec3_lerp(): void {}

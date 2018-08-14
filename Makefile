@@ -8,7 +8,7 @@ game.p8: game.lua
 
 # Run linter.
 lint: game.ts
-	@./node_modules/.bin/tslint -c tslint.json game.ts
+	@./node_modules/.bin/tslint -c tslint.json --fix game.ts
 .PHONY: lint
 
 # Transpile TypeScript to Lua.
