@@ -1,6 +1,8 @@
 declare function cls(c: col): void
 declare function flr(n: number): number
 declare function print(s: string): void
+declare function max(a: number, b: number): number
+declare function sqrt(n: number): number
 
 /**
  * game loop.
@@ -89,4 +91,22 @@ function vec3_print(v: vec3): void {
 
 function vec3_dot(a: vec3, b: vec3): number {
   return a.x * b.x + a.y * b.y + a.z * b.z
+}
+
+function vec3_scale(v: vec3, c: number): void {
+  v.x *= c
+  v.y *= c
+  v.z *= c
+}
+
+function vec3_magnitude(v: vec3): number {
+  if (v.x > 104 || v.y > 104 || v.z > 104) {
+    const m = max(max(v.x, v.y), v.z)
+    const x = v.x / m
+    const y = v.y / m
+    const z = v.z / m
+    return sqrt(x ** 2 + y ** 2 + z ** 2) * m
+  }
+
+  return sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 }
