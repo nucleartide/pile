@@ -7,6 +7,15 @@ declare function stop(): void
 declare function assert(b: boolean): void
 declare function sin(n: number): number
 declare function cos(n: number): number
+declare function peek4(n: number): number
+declare function add<T>(arr: Array<T>, thing: T): Array<T>
+declare function line(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  col?: col
+): void
 
 /**
  * -->8 game loop.
@@ -58,6 +67,33 @@ function round(n: number): number {
 
 function lerp(a: number, b: number, t: number): number {
   return (1 - t) * a + t * b
+}
+
+// clockwise() implements the shoelace formula for checking
+// the clock direction of a collection of points.
+//
+// note: when the sum/area is zero, clockwise() arbitrarily
+// chooses "clockwise" as a direction. the sum/area is zero
+// when all points are on the same scanline, for instance.
+function clockwise(points: Array<vec3>): boolean {
+  const sum = 0
+  for (let i = 0; i < 10; i++) {
+    const point = points[i]
+    const next_point = points[i % points.length]
+    //print(points[i].x)
+  }
+  /*
+  for i, point in pairs(points) do
+    local next_point = points[i % #points + 1]
+    -- to debug wrong clockwise values,
+    -- print the return value of this function
+    -- while rotating a polygon continuously.
+    --
+    -- we divide by 10 to account for overflow.
+    sum = sum + (next_point.x-point.x)/10 * (next_point.y+point.y)/10
+  end
+  */
+  return sum <= 0
 }
 
 interface vec3 {
@@ -161,7 +197,7 @@ function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
 
 type mat3 = [vec3, vec3, vec3]
 
-let vec3_mul_mat3
+let vec3_mul_mat3: (out: vec3, v: vec3, m: mat3) => void
 {
   const spare = vec3()
   vec3_mul_mat3 = function(out: vec3, v: vec3, m: mat3): void {
@@ -278,4 +314,116 @@ function mat3_rotate_y(m: mat3, a: number): void {
   vec3_mul_mat3(out, out, m)
 
   assert_vec3_equal(out, vec3(46, -64, 0))
+}
+
+/**
+ * -->8 data readers.
+ */
+
+let read_num: () => number
+{
+  const map_addr = 0x2000
+  let offset = 0
+  read_num = function(): number {
+    const n = peek4(map_addr + offset)
+    offset += 4
+    return n
+  }
+}
+
+function read_vec3(): vec3 {
+  return vec3(read_num(), read_num(), read_num())
+}
+
+function read_lines(): Array<line> {
+  const count = read_num()
+  const lines: Array<line> = []
+
+  for (let i = 0; i < count; i++) {
+    add<line>(lines, {
+      start_vec: read_vec3(),
+      end_vec: read_vec3(),
+      col: read_num(),
+      start_screen: vec3(),
+      end_screen: vec3(),
+    })
+  }
+
+  return lines
+}
+
+/**
+ * -->8 line.
+ */
+
+interface line {
+  start_vec: vec3
+  end_vec: vec3
+  col: col
+  start_screen: vec3
+  end_screen: vec3
+}
+
+function line_draw(l: line, c: cam): void {
+  cam_project(c, l.start_screen, l.start_vec)
+  cam_project(c, l.end_screen, l.end_vec)
+  line(
+    round(l.start_screen.x),
+    round(l.start_screen.y),
+    round(l.end_screen.x),
+    round(l.end_screen.y),
+    l.col
+  )
+}
+
+/**
+ * -->8 camera.
+ */
+
+interface cam {
+  pos: vec3
+  x_angle: number
+  mx: mat3
+  y_angle: number
+  my: mat3
+  dist: number
+  fov: number
+}
+
+function cam(): cam {
+  return {
+    pos: vec3(),
+    x_angle: 0,
+    mx: mat3(),
+    y_angle: 0,
+    my: mat3(),
+    dist: 7 * 10,
+    fov: 150,
+  }
+}
+
+function cam_project(c: cam, out: vec3, v: vec3): void {
+  // world to view.
+  vec3_sub(out, v, c.pos)
+
+  // rotate vector around y-axis.
+  mat3_rotate_y(c.my, -c.y_angle)
+  vec3_mul_mat3(out, out, c.my)
+
+  // rotate vector around x-axis.
+  mat3_rotate_x(c.mx, -c.x_angle)
+  vec3_mul_mat3(out, out, c.mx)
+
+  // add orthographic part of perspective divide.
+  // in a sense, this is a "field of view".
+  out.z = out.z + c.fov
+
+  // perform perspective divide.
+  const perspective = out.z / c.dist
+  out.x = perspective * out.x
+  out.y = perspective * out.y
+
+  // ndc to screen.
+  out.x = out.x + 64
+  out.y = -out.y + 64
 }
