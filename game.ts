@@ -9,7 +9,7 @@ declare function sin(n: number): number
 declare function cos(n: number): number
 
 /**
- * game loop.
+ * -->8 game loop.
  */
 
 function _draw(): void {
@@ -17,7 +17,7 @@ function _draw(): void {
 }
 
 /**
- * utils.
+ * -->8 utils.
  */
 
 enum col {
@@ -39,8 +39,17 @@ enum col {
   peach,
 }
 
+enum button {
+  left,
+  right,
+  up,
+  down,
+  z,
+  x,
+}
+
 /**
- * math.
+ * -->8 math.
  */
 
 function round(n: number): number {
@@ -255,4 +264,18 @@ function mat3_rotate_y(m: mat3, a: number): void {
   mat3_rotate_y(m, 0.75)
   vec3_mul_mat3(out, v, m)
   assert_vec3_equal(out, vec3(64, 0, -46))
+}
+
+{
+  const out = vec3()
+  const v = vec3(-46, 0, -64)
+  const m = mat3()
+
+  mat3_rotate_y(m, 0.5)
+  vec3_mul_mat3(out, v, m)
+
+  mat3_rotate_x(m, 0.25)
+  vec3_mul_mat3(out, out, m)
+
+  assert_vec3_equal(out, vec3(46, -64, 0))
 }
