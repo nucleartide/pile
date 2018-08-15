@@ -7,3 +7,7 @@ sdl_controllers.txt
 config.txt
 carts/
 backup/
+
+# Generated files.
+game.lua
+game.p8
