@@ -76,23 +76,17 @@ function lerp(a: number, b: number, t: number): number {
 // chooses "clockwise" as a direction. the sum/area is zero
 // when all points are on the same scanline, for instance.
 function clockwise(points: Array<vec3>): boolean {
-  const sum = 0
+  let sum = 0
   for (let i = 0; i < 10; i++) {
     const point = points[i]
     const next_point = points[i % points.length]
-    //print(points[i].x)
+    // to debug wrong clockwise values,
+    // print the return value of this function
+    // while rotating a polygon continuously.
+    // we divide by 10 to account for overflow.
+    sum =
+      sum + (((next_point.x - point.x) / 10) * (next_point.y + point.y)) / 10
   }
-  /*
-  for i, point in pairs(points) do
-    local next_point = points[i % #points + 1]
-    -- to debug wrong clockwise values,
-    -- print the return value of this function
-    -- while rotating a polygon continuously.
-    --
-    -- we divide by 10 to account for overflow.
-    sum = sum + (next_point.x-point.x)/10 * (next_point.y+point.y)/10
-  end
-  */
   return sum <= 0
 }
 
