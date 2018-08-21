@@ -395,6 +395,12 @@ function polygon(col: col, cam: cam, points: Array<vec3>): polygon {
   }
 }
 
+function polygon_update(p: polygon): void {
+  for (let i = 0; i < p.points_world.length; i++) {
+    cam_project(p.cam, p.points_screen[i], p.points_world[i])
+  }
+}
+
 /**
  * -->8 camera.
  */
