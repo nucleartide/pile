@@ -371,6 +371,31 @@ function line_draw(l: line, c: cam): void {
 }
 
 /**
+ * -->8 polygon.
+ */
+
+interface polygon {
+  points_world: Array<vec3>
+  points_screen: Array<vec3>
+  col: col
+  cam: cam
+}
+
+function polygon(col: col, cam: cam, points: Array<vec3>): polygon {
+  const points_screen: Array<vec3> = []
+  for (let i = 0; i < points.length; i++) {
+    add(points_screen, vec3())
+  }
+
+  return {
+    points_world: points,
+    points_screen: points_screen,
+    col: col,
+    cam: cam,
+  }
+}
+
+/**
  * -->8 camera.
  */
 
