@@ -2,6 +2,7 @@ declare function cls(c: col): void
 declare function flr(n: number): number
 declare function print(v: string | number): void
 declare function max(a: number, b: number): number
+declare function min(a: number, b: number): number
 declare function sqrt(n: number): number
 declare function stop(): void
 declare function assert(b: boolean): void
@@ -399,6 +400,64 @@ function polygon_update(p: polygon): void {
   for (let i = 0; i < p.points_world.length; i++) {
     cam_project(p.cam, p.points_screen[i], p.points_world[i])
   }
+}
+
+interface NumberMap {
+  [key: number]: number
+}
+
+/** !TupleReturn */
+function polygon_edge(
+  v1: vec3,
+  v2: vec3,
+  xl: NumberMap,
+  xr: NumberMap,
+  is_clockwise: boolean
+): [number, number] {
+  let x1 = v1.x
+  let x2 = v2.x
+
+  let fy1 = flr(v1.y)
+  let fy2 = flr(v2.y)
+
+  let t = (is_clockwise && xr) || xl
+
+  if (fy1 === fy2) {
+    if (fy1 < 0) return [0, 0]
+    if (fy1 > 127) return [127, 127]
+    const xmin = max(min(x1, x2), 0)
+    const xmax = min(max(x1, x2), 127)
+    xl[fy1] = (!xl[fy1] && xmin) || min(xl[fy1], xmin)
+    xr[fy1] = (!xr[fy1] && xmax) || max(xr[fy1], xmax)
+    return [fy1, fy1]
+  }
+
+  // ensure fy1 < fy2.
+  if (fy1 > fy2) {
+    let _
+
+    _ = x1
+    x1 = x2
+    x2 = _
+
+    _ = fy1
+    fy1 = fy2
+    fy2 = _
+
+    t = (t === xl && xr) || xl
+  }
+
+  // for each scanline in range, compute left or right side.
+  // we must use floored y, since we are computing sides for
+  // integer y-offsets.
+  const ys = max(fy1, 0)
+  const ye = min(fy2, 127)
+  const m = (x2 - x1) / (fy2 - fy1)
+  for (let y = ys; y <= ye; y++) {
+    t[y] = m * (y - fy1) + x1
+  }
+
+  return [ys, ye]
 }
 
 /**
