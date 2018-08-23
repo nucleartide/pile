@@ -8,6 +8,7 @@ declare function print(
 ): void
 declare function max(a: number, b: number): number
 declare function min(a: number, b: number): number
+declare function ceil(n: number): number
 declare function sqrt(n: number): number
 declare function stop(): void
 declare function assert(b: boolean): void
@@ -29,12 +30,31 @@ declare function rectfill(
   y1: number,
   col?: col
 ): void
+declare function btn(b: button): boolean
+declare function memcpy(destaddr: number, sourceaddr: number, len: number): void
+declare function palt(col?: col, t?: boolean): void
+declare function sspr(
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  dx: number,
+  dy: number,
+  dw?: number,
+  dh?: number,
+  flip_x?: boolean,
+  flip_y?: boolean
+): void
+declare function pal(c0?: col, c1?: col, p?: 0 | 1): void
+declare var _init: () => void
+declare var _update60: () => void
+declare var _draw: () => void
 
 /**
  * -->8 game loop.
  */
 
-function _draw(): void {
+_draw = (): void => {
   cls(col.indigo)
 }
 
@@ -496,6 +516,173 @@ function polygon_draw(p: polygon): void {
       print(y, 0, 0, 7)
       assert(false)
     }
+  }
+}
+
+{
+  let c: cam, p: polygon
+
+  const init = function(): void {
+    const s = 6
+
+    c = cam()
+    c.dist = 12 * s
+    c.fov = 34 * s
+
+    // pentagon.
+    p = polygon(col.peach, c, [
+      vec3(30, -30, 0),
+      vec3(30, 30, 0),
+      vec3(-30, 30, 0),
+      vec3(-50, 0, 0),
+      vec3(-30, -30, 0),
+    ])
+
+    // court.
+    p = polygon(col.dark_green, c, [
+      // 6.1 x 13.4
+      vec3((3.05 + 1) * s, 0, (6.7 + 1) * s),
+      vec3((3.05 + 1) * s, 0, (-6.7 - 1) * s),
+      vec3((-3.05 - 1) * s, 0, (-6.7 - 1) * s),
+      vec3((-3.05 - 1) * s, 0, (6.7 + 1) * s),
+    ])
+  }
+
+  const update = function(): void {
+    if (btn(button.down)) c.x_angle += 0.01
+    if (btn(button.up)) c.x_angle -= 0.01
+    if (btn(button.left)) c.y_angle += 0.01
+    if (btn(button.right)) c.y_angle -= 0.01
+    polygon_update(p)
+  }
+
+  const draw = function(): void {
+    cls(col.dark_blue)
+    polygon_draw(p)
+  }
+
+  _init = init
+  _update60 = update
+  _draw = draw
+}
+
+// copy data from screen to spritesheet.
+// note: offset should be even.
+// note: odd x1 values will copy an extra column of pixels on the left.
+// example: if x1==5, then you will copy pixel 4 and pixel 5.
+function copy_to_spritesheet(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  offset: number
+): void {
+  const width = x2 - x1 + 1
+  for (let i = y1; i <= y2; i++) {
+    // copy row by row.
+    memcpy(
+      (i - y1) * 64 + offset / 2, // one row of pixels is 64 bytes.
+      0x6000 + i * 64 + x1 / 2,
+      ceil(width / 2) + 1 // copy pixels, +1 column for good measure.
+    )
+  }
+}
+
+// (x1,y1) is the top-left corner of the shadow.
+function shadow_draw(
+  spx: number,
+  spy: number,
+  spw: number,
+  sph: number,
+  x1: number,
+  y1: number
+): void {
+  // bottom-right corner. never extends beyond bottom-right point.
+  const x2 = min(x1 + spw, 128)
+  const y2 = min(y1 + sph, 128)
+
+  const on_screen = !(false || x2 < 0 || x1 > 127 || y2 < 0 || y1 > 127)
+
+  if (!on_screen) {
+    return
+  }
+
+  const x1_min = max(x1, 0)
+  const y1_min = max(y1, 0)
+
+  const draw_width = x2 - x1_min
+  const draw_height = y2 - y1_min
+
+  // copy original area to spritesheet.
+  copy_to_spritesheet(x1_min, y1_min, x2, y2, 0)
+
+  // draw mask to screen.
+  // shadow is transparent, black part is not
+  palt(col.black, false)
+  palt(col.dark_blue, true)
+  sspr(spx, spy, spw, sph, x1, y1, spw, sph)
+
+  // copy original area with black border to spritesheet.
+  copy_to_spritesheet(x1_min, y1_min, x2, y2, 14)
+
+  // draw copied area to screen
+  palt()
+  sspr(
+    x1_min % 2,
+    0,
+    draw_width,
+    draw_height,
+    x1_min,
+    y1_min,
+    draw_width,
+    draw_height
+  )
+
+  // perform some palette swaps
+  pal(3, 1)
+  pal(6, 5)
+  pal(13, 1)
+
+  // draw original region with mask
+  // remember, black is transparent
+  sspr(
+    14 + (x1_min % 2),
+    0,
+    draw_width,
+    draw_height,
+    x1_min,
+    y1_min,
+    draw_width,
+    draw_height
+  )
+
+  // reset palette state
+  pal()
+}
+
+function sprite(): void {}
+
+interface player {
+  player_num: number
+  vel: vec3
+  acc: vec3
+  scale: number
+  desired_acc: number
+  pos: vec3
+  cam: cam
+}
+
+function player(cam: cam): player {
+  const scale = 6
+
+  return {
+    player_num: 0,
+    vel: vec3(),
+    acc: vec3(),
+    scale: scale,
+    desired_acc: 0.1 * scale, // meters per second
+    pos: vec3(),
+    cam: cam,
   }
 }
 
