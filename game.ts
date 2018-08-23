@@ -1,6 +1,11 @@
 declare function cls(c: col): void
 declare function flr(n: number): number
-declare function print(v: string | number): void
+declare function print(
+  v: string | number,
+  x?: number,
+  y?: number,
+  col?: col
+): void
 declare function max(a: number, b: number): number
 declare function min(a: number, b: number): number
 declare function sqrt(n: number): number
@@ -11,6 +16,13 @@ declare function cos(n: number): number
 declare function peek4(n: number): number
 declare function add<T>(arr: Array<T>, thing: T): Array<T>
 declare function line(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  col?: col
+): void
+declare function rectfill(
   x0: number,
   y0: number,
   x1: number,
@@ -458,6 +470,33 @@ function polygon_edge(
   }
 
   return [ys, ye]
+}
+
+// note: polygon must be convex. concave polygons draw artifacts.
+function polygon_draw(p: polygon): void {
+  const points = p.points_screen
+  const xl: NumberMap = {},
+    xr: NumberMap = {}
+  let ymin = 32767,
+    ymax = -32768
+  const is_clockwise = clockwise(points)
+
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i]
+    const next_point = points[i % points.length]
+    const [ys, ye] = polygon_edge(point, next_point, xl, xr, is_clockwise)
+    ymin = min(ys, ymin)
+    ymax = max(ye, ymax)
+  }
+
+  for (let y = ymin; y <= ymax; y++) {
+    if (xl[y] && xr[y]) {
+      rectfill(round(xl[y]), y, round(xr[y]), y, p.col)
+    } else {
+      print(y, 0, 0, 7)
+      assert(false)
+    }
+  }
 }
 
 /**
