@@ -845,3 +845,29 @@ function game_draw(g: game): void {
 
   player_draw(g.player)
 }
+
+let current_game_state: game_state
+let next_game_state: game_state
+let g: game
+
+_init = function(): void {
+  current_game_state = game_state.playing
+  next_game_state = game_state.playing
+  g = game()
+}
+
+_update60 = function(): void {
+  current_game_state = next_game_state
+
+  if (current_game_state === game_state.playing) {
+    game_update(g)
+  }
+}
+
+_draw = function(): void {
+  cls(col.dark_purple)
+
+  if (current_game_state === game_state.playing) {
+    game_draw(g)
+  }
+}
