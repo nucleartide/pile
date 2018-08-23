@@ -50,6 +50,10 @@ declare var _init: () => void
 declare var _update60: () => void
 declare var _draw: () => void
 
+// ===
+
+// ===
+
 /**
  * -->8 game loop.
  */
@@ -110,7 +114,7 @@ function lerp(a: number, b: number, t: number): number {
 // when all points are on the same scanline, for instance.
 function clockwise(points: Array<vec3>): boolean {
   let sum = 0
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < points.length; i++) {
     const point = points[i]
     const next_point = points[i % points.length]
     // to debug wrong clockwise values,
