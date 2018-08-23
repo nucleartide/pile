@@ -30,7 +30,7 @@ declare function rectfill(
   y1: number,
   col?: col
 ): void
-declare function btn(b: button): boolean
+declare function btn(b: button, index?: number): boolean
 declare function memcpy(destaddr: number, sourceaddr: number, len: number): void
 declare function palt(col?: col, t?: boolean): void
 declare function sspr(
@@ -686,6 +686,54 @@ function player(cam: cam): player {
   }
 }
 
+function player_input_keyboard(p: player): void {
+  // reset acceleration.
+  vec3_zero(p.acc)
+
+  // handle input
+  if (btn(button.left, p.player_num)) {
+    p.acc.x = p.acc.x - p.desired_acc
+  }
+  if (btn(button.right, p.player_num)) {
+    p.acc.x = p.acc.x + p.desired_acc
+  }
+  if (btn(button.up, p.player_num)) {
+    p.acc.z = p.acc.z - p.desired_acc
+  }
+  if (btn(button.down, p.player_num)) {
+    p.acc.z = p.acc.z + p.desired_acc
+  }
+
+  // compute new acceleration
+  vec3_normalize(p.acc)
+  vec3_scale(p.acc, p.desired_acc)
+
+  // compute new velocity
+  const t = 0.4
+  vec3_lerp(p.vel, p.vel, p.acc, t)
+}
+
+function player_update(p: player): void {
+  player_input_keyboard(p)
+  p.pos.x = p.pos.x + p.vel.x
+  p.pos.y = p.pos.y + p.vel.y
+  p.pos.z = p.pos.z + p.vel.z
+}
+
+let player_draw: (p: player) => void
+{
+  const spare = vec3()
+  player_draw = function(p: player): void {
+    cam_project(p.cam, spare, p.pos)
+    shadow_draw(0, 8, 12, 7, round(spare.x), round(spare.y))
+    // pset(round(spare.x), round(spare.y), colors_pink)
+  }
+}
+
+enum game_state {
+  playing,
+}
+
 /**
  * -->8 camera.
  */
@@ -736,4 +784,64 @@ function cam_project(c: cam, out: vec3, v: vec3): void {
   // ndc to screen.
   out.x = out.x + 64
   out.y = -out.y + 64
+}
+
+/**
+ * -->8 game class.
+ */
+
+interface game {
+  court_lines: Array<line>
+  net_lines: Array<line>
+  cam: cam
+  court: polygon
+  player: player
+}
+
+function game(): game {
+  const court_lines = read_lines()
+  const net_lines = read_lines()
+
+  const s = 6
+  const c = cam()
+  c.dist = 12 * s
+  c.fov = 34 * s
+  c.x_angle = -0.08
+  c.pos.y = -0.5 * s
+
+  const p = polygon(col.dark_green, c, [
+    vec3(-3.8 * s, 0, -7.7 * s),
+    vec3(-3.8 * s, 0, 7.7 * s),
+    vec3(3.8 * s, 0, 7.7 * s),
+    vec3(3.8 * s, 0, -7.7 * s),
+  ])
+
+  return {
+    court_lines: court_lines,
+    net_lines: net_lines,
+    cam: c,
+    court: p,
+    player: player(c),
+  }
+}
+
+function game_update(g: game): void {
+  polygon_update(g.court)
+  player_update(g.player)
+}
+
+function game_draw(g: game): void {
+  polygon_draw(g.court)
+
+  for (let i = 0; i < g.court_lines.length; i++) {
+    const l = g.court_lines[i]
+    line_draw(l, g.cam)
+  }
+
+  for (let i = 0; i < g.net_lines.length; i++) {
+    const l = g.net_lines[i]
+    line_draw(l, g.cam)
+  }
+
+  player_draw(g.player)
 }
