@@ -46,6 +46,8 @@ interface vec3 {
   z: number
 }
 
+type mat3 = [vec3, vec3, vec3]
+
 function round(n: number): number {
   return flr(n + 0.5)
 }
@@ -177,87 +179,88 @@ function vec3_normalize(v: vec3): void {
 }
 */
 
-//function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
-//  const ax = a.x,
-//    ay = a.y,
-//    az = a.z
-//  const bx = b.x,
-//    by = b.y,
-//    bz = b.z
-//  out.x = lerp(ax, bx, t)
-//  out.y = lerp(ay, by, t)
-//  out.z = lerp(az, bz, t)
-//}
-//
-//type mat3 = [vec3, vec3, vec3]
-//
-//let vec3_mul_mat3: (out: vec3, v: vec3, m: mat3) => void
-//{
-//  const spare = vec3()
-//  vec3_mul_mat3 = function(out: vec3, v: vec3, m: mat3): void {
-//    spare.x = v.x
-//    spare.y = v.y
-//    spare.z = v.z
-//    out.x = vec3_dot(spare, m[0])
-//    out.y = vec3_dot(spare, m[1])
-//    out.z = vec3_dot(spare, m[2])
-//  }
-//}
-//
-//function assert_vec3_equal(a: vec3, b: vec3): void {
-//  assert(a.x === b.x)
-//  assert(a.y === b.y)
-//  assert(a.z === b.z)
-//}
-//
-//function vec3_zero(v: vec3): void {
-//  v.x = 0
-//  v.y = 0
-//  v.z = 0
-//}
-//
-//function mat3(): mat3 {
-//  return [vec3(), vec3(), vec3()]
-//}
-//
-//// set matrix `m` to be a counterclockwise rotation of `a` around the x-axis.
-//// assume right-handed coordinates.
-//function mat3_rotate_x(m: mat3, a: number): void {
-//  m[0].x = 1
-//  m[0].y = 0
-//  m[0].z = 0
-//
-//  m[1].x = 0
-//  m[1].y = cos(a)
-//  m[1].z = sin(a)
-//
-//  m[2].x = 0
-//  m[2].y = -sin(a)
-//  m[2].z = cos(a)
-//}
-//
-//{
-//  const out = vec3()
-//  const v = vec3(-46, 0, -64)
-//  const m = mat3()
-//
-//  mat3_rotate_x(m, 0)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-46, 0, -64))
-//
-//  mat3_rotate_x(m, 0.25)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-46, 64, 0))
-//
-//  mat3_rotate_x(m, 0.5)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-46, 0, 64))
-//
-//  mat3_rotate_x(m, 0.75)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-46, -64, 0))
-//}
-//
+function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
+  const ax = a.x,
+    ay = a.y,
+    az = a.z
+  const bx = b.x,
+    by = b.y,
+    bz = b.z
+  out.x = lerp(ax, bx, t)
+  out.y = lerp(ay, by, t)
+  out.z = lerp(az, bz, t)
+}
+
+let vec3_mul_mat3: (out: vec3, v: vec3, m: mat3) => void
+{
+  const spare = vec3()
+  vec3_mul_mat3 = function(out: vec3, v: vec3, m: mat3): void {
+    spare.x = v.x
+    spare.y = v.y
+    spare.z = v.z
+    out.x = vec3_dot(spare, m[0])
+    out.y = vec3_dot(spare, m[1])
+    out.z = vec3_dot(spare, m[2])
+  }
+}
+
+function assert_vec3_equal(a: vec3, b: vec3): void {
+  assert(a.x === b.x)
+  assert(a.y === b.y)
+  assert(a.z === b.z)
+}
+
+function vec3_zero(v: vec3): void {
+  v.x = 0
+  v.y = 0
+  v.z = 0
+}
+
+function mat3(): mat3 {
+  return [vec3(), vec3(), vec3()]
+}
+
+// set matrix `m` to be a counterclockwise rotation of `a` around the x-axis.
+// assume right-handed coordinates.
+function mat3_rotate_x(m: mat3, a: number): void {
+  m[0].x = 1
+  m[0].y = 0
+  m[0].z = 0
+
+  m[1].x = 0
+  m[1].y = cos(a)
+  m[1].z = sin(a)
+
+  m[2].x = 0
+  m[2].y = -sin(a)
+  m[2].z = cos(a)
+}
+
+/*
+{
+  const out = vec3()
+  const v = vec3(-46, 0, -64)
+  const m = mat3()
+
+  mat3_rotate_x(m, 0)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 0, -64))
+
+  mat3_rotate_x(m, 0.25)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 64, 0))
+
+  mat3_rotate_x(m, 0.5)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 0, 64))
+
+  mat3_rotate_x(m, 0.75)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, -64, 0))
+  stop()
+}
+*/
+
 //// set matrix `m` to be a counterclockwise rotation of `a`
 //// around the y-axis. assume right-handed coordinates.
 //function mat3_rotate_y(m: mat3, a: number): void {
