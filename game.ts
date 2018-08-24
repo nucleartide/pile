@@ -261,58 +261,62 @@ function mat3_rotate_x(m: mat3, a: number): void {
 }
 */
 
-//// set matrix `m` to be a counterclockwise rotation of `a`
-//// around the y-axis. assume right-handed coordinates.
-//function mat3_rotate_y(m: mat3, a: number): void {
-//  m[0].x = cos(a)
-//  m[0].y = 0
-//  m[0].z = -sin(a)
-//
-//  m[1].x = 0
-//  m[1].y = 1
-//  m[1].z = 0
-//
-//  m[2].x = sin(a)
-//  m[2].y = 0
-//  m[2].z = cos(a)
-//}
-//
-//{
-//  const out = vec3()
-//  const v = vec3(-46, 0, -64)
-//  const m = mat3()
-//
-//  mat3_rotate_y(m, 0)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-46, 0, -64))
-//
-//  mat3_rotate_y(m, 0.25)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(-64, 0, 46))
-//
-//  mat3_rotate_y(m, 0.5)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(46, 0, 64))
-//
-//  mat3_rotate_y(m, 0.75)
-//  vec3_mul_mat3(out, v, m)
-//  assert_vec3_equal(out, vec3(64, 0, -46))
-//}
-//
-//{
-//  const out = vec3()
-//  const v = vec3(-46, 0, -64)
-//  const m = mat3()
-//
-//  mat3_rotate_y(m, 0.5)
-//  vec3_mul_mat3(out, v, m)
-//
-//  mat3_rotate_x(m, 0.25)
-//  vec3_mul_mat3(out, out, m)
-//
-//  assert_vec3_equal(out, vec3(46, -64, 0))
-//}
-//
+// set matrix `m` to be a counterclockwise rotation of `a`
+// around the y-axis. assume right-handed coordinates.
+function mat3_rotate_y(m: mat3, a: number): void {
+  m[0].x = cos(a)
+  m[0].y = 0
+  m[0].z = -sin(a)
+
+  m[1].x = 0
+  m[1].y = 1
+  m[1].z = 0
+
+  m[2].x = sin(a)
+  m[2].y = 0
+  m[2].z = cos(a)
+}
+
+/*
+{
+  const out = vec3()
+  const v = vec3(-46, 0, -64)
+  const m = mat3()
+
+  mat3_rotate_y(m, 0)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-46, 0, -64))
+
+  mat3_rotate_y(m, 0.25)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(-64, 0, 46))
+
+  mat3_rotate_y(m, 0.5)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(46, 0, 64))
+
+  mat3_rotate_y(m, 0.75)
+  vec3_mul_mat3(out, v, m)
+  assert_vec3_equal(out, vec3(64, 0, -46))
+}
+*/
+
+/*
+{
+  const out = vec3()
+  const v = vec3(-46, 0, -64)
+  const m = mat3()
+
+  mat3_rotate_y(m, 0.5)
+  vec3_mul_mat3(out, v, m)
+
+  mat3_rotate_x(m, 0.25)
+  vec3_mul_mat3(out, out, m)
+
+  assert_vec3_equal(out, vec3(46, -64, 0))
+}
+*/
+
 ///**
 // * -->8 data readers.
 // */
