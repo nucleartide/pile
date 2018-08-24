@@ -317,6 +317,8 @@ function mat3_rotate_y(m: mat3, a: number): void {
 }
 */
 
+// TODO: data readers won't work, need to set up data
+
 ///**
 // * -->8 data readers.
 // */
