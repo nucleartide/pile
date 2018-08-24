@@ -28,9 +28,59 @@ declare enum col {
   peach,
 }
 
+declare enum palette {
+  draw,
+  screen,
+}
+
 declare function print<T>(str: T): void
 declare function print<T>(str: T, x: number, y: number, col?: col): void
 declare function cls(col?: col): void
+declare function line(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  col?: col
+): void
+declare function rect(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  col?: col
+): void
+declare function rectfill(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  col?: col
+): void
+declare function pal(): void
+declare function pal(c0: col, c1: col, p?: palette): void
+declare function palt(): void
+declare function palt(c: col, t: boolean): void
+declare function sspr(
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  dx: number,
+  dy: number
+): void
+declare function sspr(
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  flip_x?: boolean,
+  flip_y?: boolean
+): void
 
 /**
  * Tables.
@@ -42,6 +92,7 @@ declare function add<T>(t: Array<T>, v: T): Array<T>
  * Input.
  */
 
+// TODO: Document undocumented buttons in http://pico-8.wikia.com/wiki/Btn.
 declare enum button {
   left,
   right,
@@ -50,6 +101,11 @@ declare enum button {
   z,
   x,
 }
+
+type PlayerIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+declare function btn(): number
+declare function btn(i: button, p?: PlayerIndex): boolean
 
 /**
  * Audio.
@@ -65,6 +121,11 @@ declare enum button {
 
 declare function peek4(addr: number): number
 declare function poke4(addr: number, val: number): void
+declare function memcpy(
+  dest_addr: number,
+  source_addr: number,
+  len: number
+): void
 
 /**
  * Math.
@@ -98,40 +159,3 @@ declare function sin(x: number): number
 /**
  * Cartridge data.
  */
-
-// ===
-
-/**
- * Math.
- */
-
-//declare function line(
-//  x0: number,
-//  y0: number,
-//  x1: number,
-//  y1: number,
-//  col?: col
-//): void
-//declare function rectfill(
-//  x0: number,
-//  y0: number,
-//  x1: number,
-//  y1: number,
-//  col?: col
-//): void
-//declare function btn(b: button, index?: number): boolean
-//declare function memcpy(destaddr: number, sourceaddr: number, len: number): void
-//declare function palt(col?: col, t?: boolean): void
-//declare function sspr(
-//  sx: number,
-//  sy: number,
-//  sw: number,
-//  sh: number,
-//  dx: number,
-//  dy: number,
-//  dw?: number,
-//  dh?: number,
-//  flip_x?: boolean,
-//  flip_y?: boolean
-//): void
-//declare function pal(c0?: col, c1?: col, p?: 0 | 1): void
