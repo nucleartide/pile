@@ -1,4 +1,11 @@
 /**
+ * System.
+ */
+
+declare function assert<T>(cond: boolean, message?: T): void
+declare function stop<T>(message?: T): void
+
+/**
  * Graphics.
  */
 
@@ -23,10 +30,13 @@ declare enum col {
 
 declare function print<T>(str: T): void
 declare function print<T>(str: T, x: number, y: number, col?: col): void
+declare function cls(col?: col): void
 
 /**
  * Tables.
  */
+
+declare function add<T>(t: Array<T>, v: T): Array<T>
 
 /**
  * Input.
@@ -53,9 +63,25 @@ declare enum button {
  * Memory.
  */
 
+declare function peek4(addr: number): number
+declare function poke4(addr: number, val: number): void
+
 /**
  * Math.
  */
+
+declare function max<X extends number, Y extends number>(x: X, y: Y): X | Y
+declare function min<X extends number, Y extends number>(x: X, y: Y): X | Y
+declare function mid<X extends number, Y extends number, Z extends number>(
+  x: X,
+  y: Y,
+  z: Z
+): X | Y | Z
+declare function flr(x: number): number
+declare function ceil(x: number): number
+declare function sqrt(x: number): number
+declare function cos(x: number): number
+declare function sin(x: number): number
 
 /**
  * Custom menu items.
@@ -79,27 +105,6 @@ declare enum button {
  * Math.
  */
 
-// declare function print(str, x, y, col)
-//declare function cls(col?: col): void
-//declare function flr(x: number): number
-//declare function ceil(x: number): number
-
-//declare function print(
-//  v: string | number,
-//  x?: number,
-//  y?: number,
-//  col?: col
-//): void
-//declare function max(a: number, b: number): number
-//declare function min(a: number, b: number): number
-//declare function ceil(n: number): number
-//declare function sqrt(n: number): number
-//declare function stop(): void
-//declare function assert(b: boolean): void
-//declare function sin(n: number): number
-//declare function cos(n: number): number
-//declare function peek4(n: number): number
-//declare function add<T>(arr: Array<T>, thing: T): Array<T>
 //declare function line(
 //  x0: number,
 //  y0: number,
