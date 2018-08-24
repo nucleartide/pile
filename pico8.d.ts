@@ -6,61 +6,66 @@ declare function assert<T>(cond: boolean, message?: T): void
 declare function stop<T>(message?: T): void
 
 /**
+ * Program structure.
+ */
+
+declare var _init: () => void
+declare var _update: () => void
+declare var _update60: () => void
+declare var _draw: () => void
+
+/**
  * Graphics.
  */
 
-declare enum col {
-  black,
-  dark_blue,
-  dark_purple,
-  dark_green,
-  brown,
-  dark_gray,
-  light_gray,
-  white,
-  red,
-  orange,
-  yellow,
-  green,
-  blue,
-  indigo,
-  pink,
-  peach,
-}
+declare type col_index =
+  | 0
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
 
-declare enum palette {
-  draw,
-  screen,
-}
+declare type palette_index = 0 | 1
 
 declare function print<T>(str: T): void
-declare function print<T>(str: T, x: number, y: number, col?: col): void
-declare function cls(col?: col): void
+declare function print<T>(str: T, x: number, y: number, col?: col_index): void
+declare function cls(col?: col_index): void
 declare function line(
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-  col?: col
+  col?: col_index
 ): void
 declare function rect(
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-  col?: col
+  col?: col_index
 ): void
 declare function rectfill(
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-  col?: col
+  col?: col_index
 ): void
 declare function pal(): void
-declare function pal(c0: col, c1: col, p?: palette): void
+declare function pal(c0: col_index, c1: col_index, p?: palette_index): void
 declare function palt(): void
-declare function palt(c: col, t: boolean): void
+declare function palt(c: col_index, t: boolean): void
 declare function sspr(
   sx: number,
   sy: number,
@@ -102,7 +107,7 @@ declare enum button {
   x,
 }
 
-type PlayerIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+declare type PlayerIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 declare function btn(): number
 declare function btn(i: button, p?: PlayerIndex): boolean
