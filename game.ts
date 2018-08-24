@@ -25,7 +25,7 @@ enum palette {
 }
 
 /**
- * -->8 game loop.
+ * 0. game loop.
  */
 
 _init = function(): void {}
@@ -36,132 +36,147 @@ _draw = function(): void {
   cls(col.indigo)
 }
 
-// ===
+/**
+ * 1. math.
+ */
 
-///**
-// * -->8 utils.
-// */
+interface vec3 {
+  x: number
+  y: number
+  z: number
+}
+
+function round(n: number): number {
+  return flr(n + 0.5)
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return (1 - t) * a + t * b
+}
+
+// clockwise() implements the shoelace formula for checking
+// the clock direction of a collection of points.
 //
-///**
-// * -->8 math.
-// */
+// note: when the sum/area is zero, clockwise() arbitrarily
+// chooses "clockwise" as a direction. the sum/area is zero
+// when all points are on the same scanline, for instance.
 //
-//function round(n: number): number {
-//  return flr(n + 0.5)
-//}
-//
-//function lerp(a: number, b: number, t: number): number {
-//  return (1 - t) * a + t * b
-//}
-//
-//// clockwise() implements the shoelace formula for checking
-//// the clock direction of a collection of points.
-////
-//// note: when the sum/area is zero, clockwise() arbitrarily
-//// chooses "clockwise" as a direction. the sum/area is zero
-//// when all points are on the same scanline, for instance.
-//function clockwise(points: Array<vec3>): boolean {
-//  let sum = 0
-//  for (let i = 0; i < points.length; i++) {
-//    const point = points[i]
-//    const next_point = points[i % points.length]
-//    // to debug wrong clockwise values,
-//    // print the return value of this function
-//    // while rotating a polygon continuously.
-//    // we divide by 10 to account for overflow.
-//    sum =
-//      sum + (((next_point.x - point.x) / 10) * (next_point.y + point.y)) / 10
-//  }
-//  return sum <= 0
-//}
-//
-//interface vec3 {
-//  x: number
-//  y: number
-//  z: number
-//}
-//
-//function vec3(x?: number, y?: number, z?: number): vec3 {
-//  return {
-//    x: x || 0,
-//    y: y || 0,
-//    z: z || 0,
-//  }
-//}
-//
-///*
-//function vec3_add(out: vec3, a: vec3, b: vec3): void {
-//  out.x = a.x + b.x
-//  out.y = a.y + b.y
-//  out.z = a.z + b.z
-//}
-//*/
-//
-//function vec3_sub(out: vec3, a: vec3, b: vec3): void {
-//  out.x = a.x - b.x
-//  out.y = a.y - b.y
-//  out.z = a.z - b.z
-//}
-//
-///*
-//function vec3_mul(out: vec3, a: vec3, b: vec3): void {
-//  out.x = a.x * b.x
-//  out.y = a.y * b.y
-//  out.z = a.z * b.z
-//}
-//*/
-//
-//function vec3_print(v: vec3): void {
-//  print(v.x + ', ' + v.y + ', ' + v.z)
-//}
-//
-//function vec3_dot(a: vec3, b: vec3): number {
-//  return a.x * b.x + a.y * b.y + a.z * b.z
-//}
-//
-//function vec3_scale(v: vec3, c: number): void {
-//  v.x *= c
-//  v.y *= c
-//  v.z *= c
-//}
-//
-//function vec3_magnitude(v: vec3): number {
-//  if (v.x > 104 || v.y > 104 || v.z > 104) {
-//    const m = max(max(v.x, v.y), v.z)
-//    const x = v.x / m,
-//      y = v.y / m,
-//      z = v.z / m
-//    return sqrt(x ** 2 + y ** 2 + z ** 2) * m
-//  }
-//
-//  return sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
-//}
-//
-///*
-//{
-//  print(vec3_magnitude(vec3(1, 1, 1)))
-//  print(vec3_magnitude(vec3(2, 2, 2)))
-//  print(vec3_magnitude(vec3(3, 3, 3)))
-//  print(vec3_magnitude(vec3(200, 200, 200)))
-//}
-//*/
-//
-//function vec3_normalize(v: vec3): void {
-//  const m = vec3_magnitude(v)
-//  if (m === 0) return
-//  v.x /= m
-//  v.y /= m
-//  v.z /= m
-//}
-//
-///*
-//{
-//  const v = vec3(200, 200, 200)
-//  vec3_normalize(v)
-//  print(vec3_magnitude(v))
-//}
-//*/
-//
+// also note: y points down.
+function clockwise(points: Array<vec3>): boolean {
+  let sum = 0
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i]
+    const next_point = points[(i + 1) % points.length]
+    // to debug wrong clockwise values,
+    // print the return value of this function
+    // while rotating a polygon continuously.
+    // we divide by 10 to account for overflow.
+    sum += (((next_point.x - point.x) / 10) * (next_point.y + point.y)) / 10
+  }
+  return sum <= 0
+}
+
+/*
+{
+  const points = [
+    {x:-50,y:50,z:0},
+    {x: 50,y:50,z:0},
+    {x: 50,y:-50,z:0},
+    {x:-50,y:-50,z:0},
+  ]
+
+  const points2 = [
+    {x:-50,y:-50,z:0},
+    {x: 50,y:-50,z:0},
+    {x: 50,y:50,z:0},
+    {x:-50,y:50,z:0},
+  ]
+
+  assert(!clockwise(points))
+  assert(clockwise(points2))
+  stop()
+}
+*/
+
+function vec3(x?: number, y?: number, z?: number): vec3 {
+  return {
+    x: x || 0,
+    y: y || 0,
+    z: z || 0,
+  }
+}
+
+function vec3_add(out: vec3, a: vec3, b: vec3): void {
+  out.x = a.x + b.x
+  out.y = a.y + b.y
+  out.z = a.z + b.z
+}
+
+function vec3_sub(out: vec3, a: vec3, b: vec3): void {
+  out.x = a.x - b.x
+  out.y = a.y - b.y
+  out.z = a.z - b.z
+}
+
+function vec3_mul(out: vec3, a: vec3, b: vec3): void {
+  out.x = a.x * b.x
+  out.y = a.y * b.y
+  out.z = a.z * b.z
+}
+
+function vec3_print(v: vec3): void {
+  print(v.x + ', ' + v.y + ', ' + v.z)
+}
+
+function vec3_dot(a: vec3, b: vec3): number {
+  return a.x * b.x + a.y * b.y + a.z * b.z
+}
+
+function vec3_scale(v: vec3, c: number): void {
+  v.x *= c
+  v.y *= c
+  v.z *= c
+}
+
+function vec3_magnitude(v: vec3): number {
+  if (v.x > 104 || v.y > 104 || v.z > 104) {
+    const m = max(max(v.x, v.y), v.z)
+    const x = v.x / m,
+      y = v.y / m,
+      z = v.z / m
+    return sqrt(x ** 2 + y ** 2 + z ** 2) * m
+  }
+
+  return sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
+}
+
+/*
+{
+  print(vec3_magnitude(vec3(1, 1, 1)))
+  print(vec3_magnitude(vec3(2, 2, 2)))
+  print(vec3_magnitude(vec3(3, 3, 3)))
+  print(vec3_magnitude(vec3(200, 200, 200)))
+  stop()
+}
+*/
+
+function vec3_normalize(v: vec3): void {
+  const m = vec3_magnitude(v)
+  if (m === 0) return
+  v.x /= m
+  v.y /= m
+  v.z /= m
+}
+
+/*
+{
+  const v = vec3(200, 200, 200)
+  vec3_normalize(v)
+  print(vec3_magnitude(v))
+  stop()
+}
+*/
+
 //function vec3_lerp(out: vec3, a: vec3, b: vec3, t: number): void {
 //  const ax = a.x,
 //    ay = a.y,
