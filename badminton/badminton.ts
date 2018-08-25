@@ -1,4 +1,4 @@
-///<reference path="./pico8.d.ts">
+///<reference path="../@types/pico8.d.ts">
 
 enum col {
   black,
