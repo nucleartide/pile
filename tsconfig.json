@@ -3,5 +3,5 @@
     "strict": true,
     "noEmit": true
   },
-  "include": ["./pico8.d.ts", "./game.ts"]
+  "include": ["./@types/pico8.d.ts", "./badminton/badminton.ts"]
 }

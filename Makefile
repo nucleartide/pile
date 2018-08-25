@@ -33,8 +33,3 @@ html: game.p8
 	@sleep 10
 	@pkill pico8
 .PHONY: html
-
-# Spin up a PICO-8 instance.
-pico:
-	@open -a PICO-8 --args -home $(shell pwd)
-.PHONY: pico

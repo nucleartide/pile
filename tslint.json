@@ -1,6 +1,4 @@
 {
-  "defaultSeverity": "error",
-  "jsRules": {},
   "rules": {
     "semicolon": [true, "never"],
     "class-name": false,
@@ -9,6 +7,5 @@
     "typedef": [true, "call-signature", "arrow-call-signature"],
     "quotemark": [true, "single", "avoid-template", "avoid-escape"],
     "one-variable-per-declaration": false
-  },
-  "rulesDirectory": []
+  }
 }
