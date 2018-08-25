@@ -19,6 +19,12 @@ enum col {
   peach,
 }
 
+interface Something {}
+
+function a(): void {
+  print('double quotes oh my')
+}
+
 enum palette {
   draw,
   screen,
