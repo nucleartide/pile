@@ -791,7 +791,7 @@ interface game {
   net_lines: Array<line>
   cam: cam
   court: polygon
-  // player: player
+  player: Player
 }
 
 function game(): game {
@@ -817,21 +817,21 @@ function game(): game {
     net_lines: net_lines,
     cam: c,
     court: p,
-    // player: player(c),
+    player: Player(c),
   }
 }
 
 function game_update(g: game): void {
   if (btn(button.right)) {
-    g.cam.y_angle += 0.01
+    // g.cam.y_angle += 0.01
   }
 
   if (btn(button.left)) {
-    g.cam.y_angle -= 0.01
+    // g.cam.y_angle -= 0.01
   }
 
   polygon_update(g.court)
-  // player_update(g.player)
+  Player_update(g.player)
 }
 
 function game_draw(g: game): void {
@@ -847,7 +847,7 @@ function game_draw(g: game): void {
     line_draw(l, g.cam)
   }
 
-  // player_draw(g.player)
+  Player_draw(g.player)
 }
 
 /**
@@ -859,16 +859,20 @@ interface Player {
   vel: vec3
   acc: vec3
   desired_acc: number
+  screen_pos: vec3
+  cam: cam
 }
 
-function Player(): Player {
+function Player(c: cam): Player {
   const scale = 6
 
   return {
     pos: vec3(),
     vel: vec3(),
     acc: vec3(),
-    desired_acc: 3 * scale,
+    desired_acc: 0.1 * scale,
+    screen_pos: vec3(),
+    cam: c,
   }
 }
 
@@ -897,6 +901,8 @@ function Player_update(p: Player): void {
   if (btn(button.up)) p.acc.z -= p.desired_acc
   if (btn(button.down)) p.acc.z += p.desired_acc
 
+  // TODO: normalize acceleration
+
   /**
    * Update velocity.
    */
@@ -909,8 +915,15 @@ function Player_update(p: Player): void {
    */
 
   vec3_add(p.pos, p.pos, p.vel)
+
+  /**
+   * Update screen position.
+   */
+
+  cam_project(p.cam, p.screen_pos, p.pos)
 }
 
 function Player_draw(p: Player): void {
   vec3_print(p.pos)
+  pset(round(p.screen_pos.x), round(p.screen_pos.y), col.orange)
 }
