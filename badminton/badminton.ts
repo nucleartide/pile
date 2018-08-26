@@ -59,6 +59,7 @@ _draw = function(): void {
 }
 
 /*
+// This is a camera & polygon test.
 {
   let c: cam, p: polygon
 
