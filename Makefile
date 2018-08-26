@@ -28,6 +28,13 @@ run:
 		-run $(shell pwd)/carts/badminton.p8
 .PHONY: run
 
+# Generate data cart.
+carts/badminton-data.p8: carts/badminton-writer.p8
+	@open -na PICO-8 --args \
+		-gif_scale 10 \
+		-home $(shell pwd) \
+		-run $(shell pwd)/carts/badminton-writer.p8
+
 #
 # Continuous delivery.
 #
