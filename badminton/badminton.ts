@@ -19,31 +19,47 @@ enum col {
   peach,
 }
 
-interface Something {}
-
-function a(): void {
-  print('double quotes oh my')
-}
-
 enum palette {
   draw,
   screen,
 }
 
 /**
- * 0. game loop.
+ * --> 0. game loop.
  */
 
-_init = function(): void {}
+enum game_state {
+  playing,
+}
 
-_update60 = function(): void {}
+let current_game_state: game_state
+let next_game_state: game_state
+let g: game
+
+_init = function(): void {
+  current_game_state = game_state.playing
+  next_game_state = game_state.playing
+  g = game()
+}
+
+_update60 = function(): void {
+  current_game_state = next_game_state
+
+  if (current_game_state === game_state.playing) {
+    game_update(g)
+  }
+}
 
 _draw = function(): void {
-  cls(col.indigo)
+  cls(col.dark_purple)
+
+  if (current_game_state === game_state.playing) {
+    game_draw(g)
+  }
 }
 
 /**
- * 1. math.
+ * --> 1. math.
  */
 
 interface vec3 {
@@ -323,184 +339,174 @@ function mat3_rotate_y(m: mat3, a: number): void {
 }
 */
 
-// TODO: data readers won't work, need to set up data
+/**
+ * --> 2. data readers & drawing.
+ */
 
-///**
-// * -->8 data readers.
-// */
-//
-//let read_num: () => number
-//{
-//  const map_addr = 0x2000
-//  let offset = 0
-//  read_num = function(): number {
-//    const n = peek4(map_addr + offset)
-//    offset += 4
-//    return n
-//  }
-//}
-//
-//function read_vec3(): vec3 {
-//  return vec3(read_num(), read_num(), read_num())
-//}
-//
-//function read_lines(): Array<line> {
-//  const count = read_num()
-//  const lines: Array<line> = []
-//
-//  for (let i = 0; i < count; i++) {
-//    add<line>(lines, {
-//      start_vec: read_vec3(),
-//      end_vec: read_vec3(),
-//      col: read_num(),
-//      start_screen: vec3(),
-//      end_screen: vec3(),
-//    })
-//  }
-//
-//  return lines
-//}
-//
-///**
-// * -->8 line.
-// */
-//
-//interface line {
-//  start_vec: vec3
-//  end_vec: vec3
-//  col: col
-//  start_screen: vec3
-//  end_screen: vec3
-//}
-//
-//function line_draw(l: line, c: cam): void {
-//  cam_project(c, l.start_screen, l.start_vec)
-//  cam_project(c, l.end_screen, l.end_vec)
-//  line(
-//    round(l.start_screen.x),
-//    round(l.start_screen.y),
-//    round(l.end_screen.x),
-//    round(l.end_screen.y),
-//    l.col
-//  )
-//}
-//
-///**
-// * -->8 polygon.
-// */
-//
-//interface polygon {
-//  points_world: Array<vec3>
-//  points_screen: Array<vec3>
-//  col: col
-//  cam: cam
-//}
-//
-//function polygon(col: col, cam: cam, points: Array<vec3>): polygon {
-//  const points_screen: Array<vec3> = []
-//  for (let i = 0; i < points.length; i++) {
-//    add(points_screen, vec3())
-//  }
-//
-//  return {
-//    points_world: points,
-//    points_screen: points_screen,
-//    col: col,
-//    cam: cam,
-//  }
-//}
-//
-//function polygon_update(p: polygon): void {
-//  for (let i = 0; i < p.points_world.length; i++) {
-//    cam_project(p.cam, p.points_screen[i], p.points_world[i])
-//  }
-//}
-//
-//interface NumberMap {
-//  [key: number]: number
-//}
-//
-///** !TupleReturn */
-//function polygon_edge(
-//  v1: vec3,
-//  v2: vec3,
-//  xl: NumberMap,
-//  xr: NumberMap,
-//  is_clockwise: boolean
-//): [number, number] {
-//  let x1 = v1.x
-//  let x2 = v2.x
-//
-//  let fy1 = flr(v1.y)
-//  let fy2 = flr(v2.y)
-//
-//  let t = (is_clockwise && xr) || xl
-//
-//  if (fy1 === fy2) {
-//    if (fy1 < 0) return [0, 0]
-//    if (fy1 > 127) return [127, 127]
-//    const xmin = max(min(x1, x2), 0)
-//    const xmax = min(max(x1, x2), 127)
-//    xl[fy1] = (!xl[fy1] && xmin) || min(xl[fy1], xmin)
-//    xr[fy1] = (!xr[fy1] && xmax) || max(xr[fy1], xmax)
-//    return [fy1, fy1]
-//  }
-//
-//  // ensure fy1 < fy2.
-//  if (fy1 > fy2) {
-//    let _
-//
-//    _ = x1
-//    x1 = x2
-//    x2 = _
-//
-//    _ = fy1
-//    fy1 = fy2
-//    fy2 = _
-//
-//    t = (t === xl && xr) || xl
-//  }
-//
-//  // for each scanline in range, compute left or right side.
-//  // we must use floored y, since we are computing sides for
-//  // integer y-offsets.
-//  const ys = max(fy1, 0)
-//  const ye = min(fy2, 127)
-//  const m = (x2 - x1) / (fy2 - fy1)
-//  for (let y = ys; y <= ye; y++) {
-//    t[y] = m * (y - fy1) + x1
-//  }
-//
-//  return [ys, ye]
-//}
-//
-//// note: polygon must be convex. concave polygons draw artifacts.
-//function polygon_draw(p: polygon): void {
-//  const points = p.points_screen
-//  const xl: NumberMap = {},
-//    xr: NumberMap = {}
-//  let ymin = 32767,
-//    ymax = -32768
-//  const is_clockwise = clockwise(points)
-//
-//  for (let i = 0; i < points.length; i++) {
-//    const point = points[i]
-//    const next_point = points[i % points.length]
-//    const [ys, ye] = polygon_edge(point, next_point, xl, xr, is_clockwise)
-//    ymin = min(ys, ymin)
-//    ymax = max(ye, ymax)
-//  }
-//
-//  for (let y = ymin; y <= ymax; y++) {
-//    if (xl[y] && xr[y]) {
-//      rectfill(round(xl[y]), y, round(xr[y]), y, p.col)
-//    } else {
-//      print(y, 0, 0, 7)
-//      assert(false)
-//    }
-//  }
-//}
-//
+let read_num: () => number
+{
+  const map_addr = 0x2000
+  let offset = 0
+  read_num = function(): number {
+    const n = peek4(map_addr + offset)
+    offset += 4
+    return n
+  }
+}
+
+function read_vec3(): vec3 {
+  return vec3(read_num(), read_num(), read_num())
+}
+
+interface line {
+  start_vec: vec3
+  end_vec: vec3
+  col: col
+  start_screen: vec3
+  end_screen: vec3
+}
+
+function read_lines(): Array<line> {
+  const count = read_num()
+  const lines: Array<line> = []
+
+  for (let i = 0; i < count; i++) {
+    add<line>(lines, {
+      start_vec: read_vec3(),
+      end_vec: read_vec3(),
+      col: read_num(),
+      start_screen: vec3(),
+      end_screen: vec3(),
+    })
+  }
+
+  return lines
+}
+
+function line_draw(l: line, c: cam): void {
+  cam_project(c, l.start_screen, l.start_vec)
+  cam_project(c, l.end_screen, l.end_vec)
+  line(
+    round(l.start_screen.x),
+    round(l.start_screen.y),
+    round(l.end_screen.x),
+    round(l.end_screen.y),
+    l.col
+  )
+}
+
+interface polygon {
+  points_world: Array<vec3>
+  points_screen: Array<vec3>
+  col: col
+  cam: cam
+}
+
+function polygon(col: col, cam: cam, points: Array<vec3>): polygon {
+  const points_screen: Array<vec3> = []
+  for (let i = 0; i < points.length; i++) {
+    add(points_screen, vec3())
+  }
+
+  return {
+    points_world: points,
+    points_screen: points_screen,
+    col: col,
+    cam: cam,
+  }
+}
+
+function polygon_update(p: polygon): void {
+  for (let i = 0; i < p.points_world.length; i++) {
+    cam_project(p.cam, p.points_screen[i], p.points_world[i])
+  }
+}
+
+interface NumberMap {
+  [key: number]: number
+}
+
+/** !TupleReturn */
+function polygon_edge(
+  v1: vec3,
+  v2: vec3,
+  xl: NumberMap,
+  xr: NumberMap,
+  is_clockwise: boolean
+): [number, number] {
+  let x1 = v1.x
+  let x2 = v2.x
+
+  let fy1 = flr(v1.y)
+  let fy2 = flr(v2.y)
+
+  let t = (is_clockwise && xr) || xl
+
+  if (fy1 === fy2) {
+    if (fy1 < 0) return [0, 0]
+    if (fy1 > 127) return [127, 127]
+    const xmin = max(min(x1, x2), 0)
+    const xmax = min(max(x1, x2), 127)
+    xl[fy1] = (!xl[fy1] && xmin) || min(xl[fy1], xmin)
+    xr[fy1] = (!xr[fy1] && xmax) || max(xr[fy1], xmax)
+    return [fy1, fy1]
+  }
+
+  // ensure fy1 < fy2.
+  if (fy1 > fy2) {
+    let _
+
+    _ = x1
+    x1 = x2
+    x2 = _
+
+    _ = fy1
+    fy1 = fy2
+    fy2 = _
+
+    t = (t === xl && xr) || xl
+  }
+
+  // for each scanline in range, compute left or right side.
+  // we must use floored y, since we are computing sides for
+  // integer y-offsets.
+  const ys = max(fy1, 0)
+  const ye = min(fy2, 127)
+  const m = (x2 - x1) / (fy2 - fy1)
+  for (let y = ys; y <= ye; y++) {
+    t[y] = m * (y - fy1) + x1
+  }
+
+  return [ys, ye]
+}
+
+// note: polygon must be convex. concave polygons draw artifacts.
+function polygon_draw(p: polygon): void {
+  const points = p.points_screen
+  const xl: NumberMap = {},
+    xr: NumberMap = {}
+  let ymin = 32767,
+    ymax = -32768
+  const is_clockwise = clockwise(points)
+
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i]
+    const next_point = points[(i + 1) % points.length]
+    const [ys, ye] = polygon_edge(point, next_point, xl, xr, is_clockwise)
+    ymin = min(ys, ymin)
+    ymax = max(ye, ymax)
+  }
+
+  for (let y = ymin; y <= ymax; y++) {
+    if (xl[y] && xr[y]) {
+      rectfill(round(xl[y]), y, round(xr[y]), y, p.col)
+    } else {
+      print(y, 0, 0, 7)
+      assert(false)
+    }
+  }
+}
+
 //{
 //  let c: cam, p: polygon
 //
@@ -711,145 +717,115 @@ function mat3_rotate_y(m: mat3, a: number): void {
 //    // pset(round(spare.x), round(spare.y), colors_pink)
 //  }
 //}
-//
-//enum game_state {
-//  playing,
-//}
-//
-///**
-// * -->8 camera.
-// */
-//
-//interface cam {
-//  pos: vec3
-//  x_angle: number
-//  mx: mat3
-//  y_angle: number
-//  my: mat3
-//  dist: number
-//  fov: number
-//}
-//
-//function cam(): cam {
-//  return {
-//    pos: vec3(),
-//    x_angle: 0,
-//    mx: mat3(),
-//    y_angle: 0,
-//    my: mat3(),
-//    dist: 7 * 10,
-//    fov: 150,
-//  }
-//}
-//
-//function cam_project(c: cam, out: vec3, v: vec3): void {
-//  // world to view.
-//  vec3_sub(out, v, c.pos)
-//
-//  // rotate vector around y-axis.
-//  mat3_rotate_y(c.my, -c.y_angle)
-//  vec3_mul_mat3(out, out, c.my)
-//
-//  // rotate vector around x-axis.
-//  mat3_rotate_x(c.mx, -c.x_angle)
-//  vec3_mul_mat3(out, out, c.mx)
-//
-//  // add orthographic part of perspective divide.
-//  // in a sense, this is a "field of view".
-//  out.z = out.z + c.fov
-//
-//  // perform perspective divide.
-//  const perspective = out.z / c.dist
-//  out.x = perspective * out.x
-//  out.y = perspective * out.y
-//
-//  // ndc to screen.
-//  out.x = out.x + 64
-//  out.y = -out.y + 64
-//}
-//
-///**
-// * -->8 game class.
-// */
-//
-//interface game {
-//  court_lines: Array<line>
-//  net_lines: Array<line>
-//  cam: cam
-//  court: polygon
-//  player: player
-//}
-//
-//function game(): game {
-//  const court_lines = read_lines()
-//  const net_lines = read_lines()
-//
-//  const s = 6
-//  const c = cam()
-//  c.dist = 12 * s
-//  c.fov = 34 * s
-//  c.x_angle = -0.08
-//  c.pos.y = -0.5 * s
-//
-//  const p = polygon(col.dark_green, c, [
-//    vec3(-3.8 * s, 0, -7.7 * s),
-//    vec3(-3.8 * s, 0, 7.7 * s),
-//    vec3(3.8 * s, 0, 7.7 * s),
-//    vec3(3.8 * s, 0, -7.7 * s),
-//  ])
-//
-//  return {
-//    court_lines: court_lines,
-//    net_lines: net_lines,
-//    cam: c,
-//    court: p,
-//    player: player(c),
-//  }
-//}
-//
-//function game_update(g: game): void {
-//  polygon_update(g.court)
-//  player_update(g.player)
-//}
-//
-//function game_draw(g: game): void {
-//  polygon_draw(g.court)
-//
-//  for (let i = 0; i < g.court_lines.length; i++) {
-//    const l = g.court_lines[i]
-//    line_draw(l, g.cam)
-//  }
-//
-//  for (let i = 0; i < g.net_lines.length; i++) {
-//    const l = g.net_lines[i]
-//    line_draw(l, g.cam)
-//  }
-//
-//  player_draw(g.player)
-//}
-//
-//let current_game_state: game_state
-//let next_game_state: game_state
-//let g: game
-//
-//_init = function(): void {
-//  current_game_state = game_state.playing
-//  next_game_state = game_state.playing
-//  g = game()
-//}
-//
-//_update60 = function(): void {
-//  current_game_state = next_game_state
-//
-//  if (current_game_state === game_state.playing) {
-//    game_update(g)
-//  }
-//}
-//
-//_draw = function(): void {
-//  cls(col.dark_purple)
-//
-//  if (current_game_state === game_state.playing) {
-//    game_draw(g)
-//  }
-//}
+
+/**
+ * --> 3. camera.
+ */
+
+interface cam {
+  pos: vec3
+  x_angle: number
+  mx: mat3
+  y_angle: number
+  my: mat3
+  dist: number
+  fov: number
+}
+
+function cam(): cam {
+  return {
+    pos: vec3(),
+    x_angle: 0,
+    mx: mat3(),
+    y_angle: 0,
+    my: mat3(),
+    dist: 7 * 10,
+    fov: 150,
+  }
+}
+
+function cam_project(c: cam, out: vec3, v: vec3): void {
+  // world to view.
+  vec3_sub(out, v, c.pos)
+
+  // rotate vector around y-axis.
+  mat3_rotate_y(c.my, -c.y_angle)
+  vec3_mul_mat3(out, out, c.my)
+
+  // rotate vector around x-axis.
+  mat3_rotate_x(c.mx, -c.x_angle)
+  vec3_mul_mat3(out, out, c.mx)
+
+  // add orthographic part of perspective divide.
+  // in a sense, this is a "field of view".
+  out.z = out.z + c.fov
+
+  // perform perspective divide.
+  const perspective = out.z / c.dist
+  out.x = perspective * out.x
+  out.y = perspective * out.y
+
+  // ndc to screen.
+  out.x = out.x + 64
+  out.y = -out.y + 64
+}
+
+/**
+ * -->8 4. game.
+ */
+
+interface game {
+  court_lines: Array<line>
+  net_lines: Array<line>
+  cam: cam
+  court: polygon
+  // player: player
+}
+
+function game(): game {
+  const court_lines = read_lines()
+  const net_lines = read_lines()
+
+  const s = 6
+  const c = cam()
+  c.dist = 12 * s
+  c.fov = 34 * s
+  c.x_angle = -0.08
+  c.pos.y = -0.5 * s
+
+  const p = polygon(col.dark_green, c, [
+    vec3(-3.8 * s, 0, -7.7 * s),
+    vec3(-3.8 * s, 0, 7.7 * s),
+    vec3(3.8 * s, 0, 7.7 * s),
+    vec3(3.8 * s, 0, -7.7 * s),
+  ])
+
+  return {
+    court_lines: court_lines,
+    net_lines: net_lines,
+    cam: c,
+    court: p,
+    // player: player(c),
+  }
+}
+
+function game_update(g: game): void {
+  polygon_update(g.court)
+  // player_update(g.player)
+}
+
+function game_draw(g: game): void {
+  polygon_draw(g.court)
+
+  for (let i = 0; i < g.court_lines.length; i++) {
+    const l = g.court_lines[i]
+    line_draw(l, g.cam)
+  }
+
+  for (let i = 0; i < g.net_lines.length; i++) {
+    const l = g.net_lines[i]
+    line_draw(l, g.cam)
+  }
+
+  // player_draw(g.player)
+}
