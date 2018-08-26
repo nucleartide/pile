@@ -849,3 +849,68 @@ function game_draw(g: game): void {
 
   // player_draw(g.player)
 }
+
+/**
+ * --> 5. player.
+ */
+
+interface Player {
+  pos: vec3
+  vel: vec3
+  acc: vec3
+  desired_acc: number
+}
+
+function Player(): Player {
+  const scale = 6
+
+  return {
+    pos: vec3(),
+    vel: vec3(),
+    acc: vec3(),
+    desired_acc: 3 * scale,
+  }
+}
+
+/*
+
+  we're implementing movement!
+
+  we need acceleration, to determine how
+  much to change the player's velocity
+
+  every frame, we'll update the position (`pos`)
+  using the player's velocity (`vel`)
+
+*/
+
+function Player_update(p: Player): void {
+  /**
+   * Compute acceleration.
+   *
+   * Acceleration here is like "desired velocity".
+   */
+
+  vec3_zero(p.acc)
+  if (btn(button.left)) p.acc.x -= p.desired_acc
+  if (btn(button.right)) p.acc.x += p.desired_acc
+  if (btn(button.up)) p.acc.z -= p.desired_acc
+  if (btn(button.down)) p.acc.z += p.desired_acc
+
+  /**
+   * Update velocity.
+   */
+
+  const t = 0.5
+  vec3_lerp(p.vel, p.vel, p.acc, t)
+
+  /**
+   * Update position.
+   */
+
+  vec3_add(p.pos, p.pos, p.vel)
+}
+
+function Player_draw(p: Player): void {
+  vec3_print(p.pos)
+}
