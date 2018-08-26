@@ -58,6 +58,55 @@ _draw = function(): void {
   }
 }
 
+/*
+{
+  let c: cam, p: polygon
+
+  const init = function(): void {
+    const s = 6
+
+    c = cam()
+    c.dist = 12 * s
+    c.fov = 34 * s
+
+    // pentagon.
+    p = polygon(col.peach, c, [
+      vec3(30, -30, 0),
+      vec3(30, 30, 0),
+      vec3(-30, 30, 0),
+      vec3(-50, 0, 0),
+      vec3(-30, -30, 0),
+    ])
+
+    // court.
+    p = polygon(col.dark_green, c, [
+      // 6.1 x 13.4
+      vec3((3.05 + 1) * s, 0, (6.7 + 1) * s),
+      vec3((3.05 + 1) * s, 0, (-6.7 - 1) * s),
+      vec3((-3.05 - 1) * s, 0, (-6.7 - 1) * s),
+      vec3((-3.05 - 1) * s, 0, (6.7 + 1) * s),
+    ])
+  }
+
+  const update = function(): void {
+    if (btn(button.down)) c.x_angle += 0.01
+    if (btn(button.up)) c.x_angle -= 0.01
+    if (btn(button.left)) c.y_angle += 0.01
+    if (btn(button.right)) c.y_angle -= 0.01
+    polygon_update(p)
+  }
+
+  const draw = function(): void {
+    cls(col.dark_blue)
+    polygon_draw(p)
+  }
+
+  _init = init
+  _update60 = update
+  _draw = draw
+}
+*/
+
 /**
  * --> 1. math.
  */
@@ -507,53 +556,6 @@ function polygon_draw(p: polygon): void {
   }
 }
 
-//{
-//  let c: cam, p: polygon
-//
-//  const init = function(): void {
-//    const s = 6
-//
-//    c = cam()
-//    c.dist = 12 * s
-//    c.fov = 34 * s
-//
-//    // pentagon.
-//    p = polygon(col.peach, c, [
-//      vec3(30, -30, 0),
-//      vec3(30, 30, 0),
-//      vec3(-30, 30, 0),
-//      vec3(-50, 0, 0),
-//      vec3(-30, -30, 0),
-//    ])
-//
-//    // court.
-//    p = polygon(col.dark_green, c, [
-//      // 6.1 x 13.4
-//      vec3((3.05 + 1) * s, 0, (6.7 + 1) * s),
-//      vec3((3.05 + 1) * s, 0, (-6.7 - 1) * s),
-//      vec3((-3.05 - 1) * s, 0, (-6.7 - 1) * s),
-//      vec3((-3.05 - 1) * s, 0, (6.7 + 1) * s),
-//    ])
-//  }
-//
-//  const update = function(): void {
-//    if (btn(button.down)) c.x_angle += 0.01
-//    if (btn(button.up)) c.x_angle -= 0.01
-//    if (btn(button.left)) c.y_angle += 0.01
-//    if (btn(button.right)) c.y_angle -= 0.01
-//    polygon_update(p)
-//  }
-//
-//  const draw = function(): void {
-//    cls(col.dark_blue)
-//    polygon_draw(p)
-//  }
-//
-//  _init = init
-//  _update60 = update
-//  _draw = draw
-//}
-//
 //// copy data from screen to spritesheet.
 //// note: offset should be even.
 //// note: odd x1 values will copy an extra column of pixels on the left.
