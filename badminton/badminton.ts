@@ -24,6 +24,15 @@ enum palette {
   screen,
 }
 
+enum button {
+  left,
+  right,
+  up,
+  down,
+  z,
+  x,
+}
+
 /**
  * --> 0. game loop.
  */
@@ -813,6 +822,14 @@ function game(): game {
 }
 
 function game_update(g: game): void {
+  if (btn(button.right)) {
+    g.cam.y_angle += 0.01
+  }
+
+  if (btn(button.left)) {
+    g.cam.y_angle -= 0.01
+  }
+
   polygon_update(g.court)
   // player_update(g.player)
 }
