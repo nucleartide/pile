@@ -956,6 +956,7 @@ interface Ball {
   acc: vec3
   screen_pos: vec3
   cam: cam
+  is_kinematic: boolean
 }
 
 function ball(c: cam): Ball {
@@ -967,6 +968,7 @@ function ball(c: cam): Ball {
     acc: vec3(0, -5 * scale, 0),
     screen_pos: vec3(),
     cam: c,
+    is_kinematic: false,
   }
 }
 
@@ -974,19 +976,21 @@ declare var ball_update: (b: Ball) => void
 {
   const spare = vec3()
   ball_update = (b: Ball): void => {
-    // compute change in velocity for this frame.
-    vec3_assign(spare, b.acc)
-    vec3_scale(spare, 1 / 60)
+    if (!b.is_kinematic) {
+      // compute change in velocity for this frame.
+      vec3_assign(spare, b.acc)
+      vec3_scale(spare, 1 / 60)
 
-    // apply change in velocity.
-    vec3_add(b.vel, b.vel, spare)
+      // apply change in velocity.
+      vec3_add(b.vel, b.vel, spare)
 
-    // compute change in position for this frame.
-    vec3_assign(spare, b.vel)
-    vec3_scale(spare, 1 / 60)
+      // compute change in position for this frame.
+      vec3_assign(spare, b.vel)
+      vec3_scale(spare, 1 / 60)
 
-    // apply change in position.
-    vec3_add(b.pos, b.pos, b.vel)
+      // apply change in position.
+      vec3_add(b.pos, b.pos, b.vel)
+    }
 
     // bounds check.
     if (b.pos.y < 0) {
