@@ -855,6 +855,7 @@ function game_draw(g: game): void {
  */
 
 interface Player {
+  scale: number
   pos: vec3
   vel: vec3
   acc: vec3
@@ -867,6 +868,7 @@ function Player(c: cam): Player {
   const scale = 6
 
   return {
+    scale: scale,
     pos: vec3(),
     vel: vec3(),
     acc: vec3(),
@@ -930,6 +932,14 @@ function Player_update(p: Player): void {
 }
 
 function Player_draw(p: Player): void {
-  vec3_print(p.pos)
-  pset(round(p.screen_pos.x), round(p.screen_pos.y), col.orange)
+  const width = 10
+  const height = 25
+
+  rectfill(
+    round(p.screen_pos.x - width / 2),
+    round(p.screen_pos.y - height),
+    round(p.screen_pos.x + width / 2),
+    round(p.screen_pos.y),
+    col.orange
+  )
 }
