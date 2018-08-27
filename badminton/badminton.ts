@@ -667,7 +667,7 @@ function polygon_draw(p: polygon): void {
 //  vel: vec3
 //  acc: vec3
 //  scale: number
-//  desired_acc: number
+//  desired_speed: number
 //  pos: vec3
 //  cam: cam
 //}
@@ -680,7 +680,7 @@ function polygon_draw(p: polygon): void {
 //    vel: vec3(),
 //    acc: vec3(),
 //    scale: scale,
-//    desired_acc: 0.1 * scale, // meters per second
+//    desired_speed: 0.1 * scale, // meters per second
 //    pos: vec3(),
 //    cam: cam,
 //  }
@@ -692,21 +692,21 @@ function polygon_draw(p: polygon): void {
 //
 //  // handle input
 //  if (btn(button.left, p.player_num)) {
-//    p.acc.x = p.acc.x - p.desired_acc
+//    p.acc.x = p.acc.x - p.desired_speed
 //  }
 //  if (btn(button.right, p.player_num)) {
-//    p.acc.x = p.acc.x + p.desired_acc
+//    p.acc.x = p.acc.x + p.desired_speed
 //  }
 //  if (btn(button.up, p.player_num)) {
-//    p.acc.z = p.acc.z - p.desired_acc
+//    p.acc.z = p.acc.z - p.desired_speed
 //  }
 //  if (btn(button.down, p.player_num)) {
-//    p.acc.z = p.acc.z + p.desired_acc
+//    p.acc.z = p.acc.z + p.desired_speed
 //  }
 //
 //  // compute new acceleration
 //  vec3_normalize(p.acc)
-//  vec3_scale(p.acc, p.desired_acc)
+//  vec3_scale(p.acc, p.desired_speed)
 //
 //  // compute new velocity
 //  const t = 0.4
@@ -858,7 +858,7 @@ interface Player {
   pos: vec3
   vel: vec3
   acc: vec3
-  desired_acc: number
+  desired_speed: number
   screen_pos: vec3
   cam: cam
 }
@@ -870,7 +870,7 @@ function Player(c: cam): Player {
     pos: vec3(),
     vel: vec3(),
     acc: vec3(),
-    desired_acc: 0.1 * scale,
+    desired_speed: 10 * scale,
     screen_pos: vec3(),
     cam: c,
   }
@@ -896,12 +896,17 @@ function Player_update(p: Player): void {
    */
 
   vec3_zero(p.acc)
-  if (btn(button.left)) p.acc.x -= p.desired_acc
-  if (btn(button.right)) p.acc.x += p.desired_acc
-  if (btn(button.up)) p.acc.z -= p.desired_acc
-  if (btn(button.down)) p.acc.z += p.desired_acc
+  if (btn(button.left)) p.acc.x -= p.desired_speed
+  if (btn(button.right)) p.acc.x += p.desired_speed
+  if (btn(button.up)) p.acc.z -= p.desired_speed
+  if (btn(button.down)) p.acc.z += p.desired_speed
 
-  // TODO: normalize acceleration
+  /**
+   * Normalize & scale acceleration.
+   */
+
+  vec3_normalize(p.acc)
+  vec3_scale(p.acc, p.desired_speed)
 
   /**
    * Update velocity.
@@ -909,6 +914,7 @@ function Player_update(p: Player): void {
 
   const t = 0.5
   vec3_lerp(p.vel, p.vel, p.acc, t)
+  vec3_scale(p.vel, 1 / 60)
 
   /**
    * Update position.
