@@ -233,6 +233,15 @@ function vec3_magnitude(v: vec3): number {
   return sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 }
 
+declare var vec3_dist: (a: vec3, b: vec3) => number
+{
+  const spare = vec3()
+  vec3_dist = (a: vec3, b: vec3): number => {
+    vec3_sub(spare, a, b)
+    return vec3_magnitude(spare)
+  }
+}
+
 /*
 {
   print(vec3_magnitude(vec3(1, 1, 1)))
@@ -666,66 +675,6 @@ function polygon_draw(p: polygon): void {
 //  pal()
 //}
 //
-//function sprite(): void {}
-//
-//interface player {
-//  player_num: number
-//  vel: vec3
-//  acc: vec3
-//  scale: number
-//  desired_speed: number
-//  pos: vec3
-//  cam: cam
-//}
-//
-//function player(cam: cam): player {
-//  const scale = 6
-//
-//  return {
-//    player_num: 0,
-//    vel: vec3(),
-//    acc: vec3(),
-//    scale: scale,
-//    desired_speed: 0.1 * scale, // meters per second
-//    pos: vec3(),
-//    cam: cam,
-//  }
-//}
-//
-//function player_input_keyboard(p: player): void {
-//  // reset acceleration.
-//  vec3_zero(p.acc)
-//
-//  // handle input
-//  if (btn(button.left, p.player_num)) {
-//    p.acc.x = p.acc.x - p.desired_speed
-//  }
-//  if (btn(button.right, p.player_num)) {
-//    p.acc.x = p.acc.x + p.desired_speed
-//  }
-//  if (btn(button.up, p.player_num)) {
-//    p.acc.z = p.acc.z - p.desired_speed
-//  }
-//  if (btn(button.down, p.player_num)) {
-//    p.acc.z = p.acc.z + p.desired_speed
-//  }
-//
-//  // compute new acceleration
-//  vec3_normalize(p.acc)
-//  vec3_scale(p.acc, p.desired_speed)
-//
-//  // compute new velocity
-//  const t = 0.4
-//  vec3_lerp(p.vel, p.vel, p.acc, t)
-//}
-//
-//function player_update(p: player): void {
-//  player_input_keyboard(p)
-//  p.pos.x = p.pos.x + p.vel.x
-//  p.pos.y = p.pos.y + p.vel.y
-//  p.pos.z = p.pos.z + p.vel.z
-//}
-//
 //let player_draw: (p: player) => void
 //{
 //  const spare = vec3()
@@ -819,13 +768,15 @@ function game(): game {
     vec3(3.8 * s, 0, -7.7 * s),
   ])
 
+  const b = ball(c)
+
   return {
     court_lines: court_lines,
     net_lines: net_lines,
     cam: c,
     court: p,
-    player: player(c),
-    ball: ball(c),
+    player: player(c, b),
+    ball: b,
   }
 }
 
@@ -864,9 +815,12 @@ interface Player {
   desired_speed: number
   screen_pos: vec3
   cam: cam
+  ball: Ball
+  hit: boolean
+  spare: vec3
 }
 
-function player(c: cam): Player {
+function player(c: cam, b: Ball): Player {
   const scale = 6
 
   return {
@@ -877,22 +831,16 @@ function player(c: cam): Player {
     desired_speed: 10 * scale,
     screen_pos: vec3(),
     cam: c,
+    ball: b,
+    hit: false,
+    spare: vec3(),
   }
 }
 
-/*
-
-  we're implementing movement!
-
-  we need acceleration, to determine how
-  much to change the player's velocity
-
-  every frame, we'll update the position (`pos`)
-  using the player's velocity (`vel`)
-
-*/
-
 function player_update(p: Player): void {
+  // temporary `hit` property
+  p.hit = false
+
   /**
    * Compute acceleration.
    *
@@ -931,6 +879,20 @@ function player_update(p: Player): void {
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
+
+  /**
+   * Swing at ball.
+   */
+
+  const scale = 6
+
+  vec3_assign(p.spare, p.pos)
+  p.spare.y = 1 * scale
+
+  if (vec3_dist(p.spare, p.ball.pos) < 1 * scale) {
+    p.hit = true
+    // TODO: add velocity to ball
+  }
 }
 
 function player_draw(p: Player): void {
@@ -944,6 +906,10 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  if (p.hit) {
+    print('hit')
+  }
 }
 
 /**
@@ -963,7 +929,7 @@ function ball(c: cam): Ball {
   const scale = 6
 
   return {
-    pos: vec3(-2 * scale, 2 * scale, 0),
+    pos: vec3(-0.5 * scale, 2 * scale, 0),
     vel: vec3(0, 0, 0),
     acc: vec3(0, -5 * scale, 0),
     screen_pos: vec3(),
