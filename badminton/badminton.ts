@@ -851,7 +851,7 @@ function player(c: cam, b: Ball): Player {
 
   return {
     scale: scale,
-    pos: vec3(-1 * scale, 0, 0),
+    pos: vec3(-0.5 * scale, 0, 0),
     vel: vec3(),
     acc: vec3(),
     desired_speed: 10 * scale,
@@ -893,13 +893,14 @@ function player_update(p: Player): void {
 
   const t = 0.5
   vec3_lerp(p.vel, p.vel, p.acc, t)
-  vec3_scale(p.vel, 1 / 60)
+  const v = vec3((p.vel.x * 1) / 60, (p.vel.y * 1) / 60, (p.vel.z * 1) / 60)
+  //vec3_scale(p.vel, 1 / 60) // TODO
 
   /**
    * Update position.
    */
 
-  vec3_add(p.pos, p.pos, p.vel)
+  vec3_add(p.pos, p.pos, v)
 
   /**
    * Update screen position.
@@ -918,12 +919,13 @@ function player_update(p: Player): void {
   p.spare.x = p.ball.pos.x - p.pos.x
   p.spare.y = p.ball.pos.y - p.pos.y + 1 * scale
   p.spare.z = p.ball.pos.z - p.pos.z
+  return
 
   // if the dist is less than 1m,
   // the "swing" button is pressed, // TODO: button handling, press once
   // and the ball is still in the air
   // TODO: consider different hit regions
-  if (vec3_magnitude(p.spare) < 1.5 * scale) {
+  if (vec3_magnitude(p.spare) < 2 * scale && p.ball.pos.y > 0) {
     // compute velocity, store in spare vector
     if (p.spare.x < 0) {
       // ball on left
@@ -963,6 +965,7 @@ function player_draw(p: Player): void {
     print('hit')
   }
   print(vec3_magnitude(p.spare))
+  print(p.ball.pos.y > 0)
 }
 
 /**
@@ -982,9 +985,9 @@ function ball(c: cam): Ball {
   const scale = 6
 
   return {
-    pos: vec3(0, 2 * scale, 0),
-    vel: vec3(0, 0, 0),
-    acc: vec3(0, -2.5 * scale, 0),
+    pos: vec3(0, 2 * scale, 10 * scale),
+    vel: vec3(1 * scale, 0, 0),
+    acc: vec3(0, 0, 0),
     screen_pos: vec3(),
     cam: c,
     is_kinematic: false,
@@ -995,20 +998,20 @@ declare var ball_update: (b: Ball) => void
 {
   const spare = vec3()
   ball_update = (b: Ball): void => {
-    if (!b.is_kinematic) {
+    if (!b.is_kinematic && b.pos.y > 0) {
       // compute change in velocity for this frame.
       vec3_assign(spare, b.acc)
       vec3_scale(spare, 1 / 60)
 
       // apply change in velocity.
-      vec3_add(b.vel, b.vel, spare)
+      //vec3_add(b.vel, b.vel, spare)
 
       // compute change in position for this frame.
       vec3_assign(spare, b.vel)
       vec3_scale(spare, 1 / 60)
 
       // apply change in position.
-      vec3_add(b.pos, b.pos, b.vel)
+      vec3_add(b.pos, b.pos, spare)
     }
 
     // bounds check.
@@ -1024,4 +1027,5 @@ declare var ball_update: (b: Ball) => void
 function ball_draw(b: Ball): void {
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
   vec3_print(b.pos)
+  vec3_print(b.vel)
 }
