@@ -843,6 +843,7 @@ interface Player {
   ball: Ball
   spare: vec3
   up: vec3
+  hit: boolean
 }
 
 function player(c: cam, b: Ball): Player {
@@ -850,7 +851,7 @@ function player(c: cam, b: Ball): Player {
 
   return {
     scale: scale,
-    pos: vec3(),
+    pos: vec3(-1 * scale, 0, 0),
     vel: vec3(),
     acc: vec3(),
     desired_speed: 10 * scale,
@@ -859,10 +860,14 @@ function player(c: cam, b: Ball): Player {
     ball: b,
     spare: vec3(),
     up: vec3(0, 1, 0),
+    hit: false,
   }
 }
 
 function player_update(p: Player): void {
+  // temporary hit variable
+  p.hit = false
+
   /**
    * Compute acceleration.
    *
@@ -917,11 +922,7 @@ function player_update(p: Player): void {
   // if the dist is less than 1m,
   // the "swing" button is pressed,
   // and the ball is still in the air
-  if (
-    vec3_magnitude(p.spare) < 1.5 * scale &&
-    btn(button.z) &&
-    p.ball.pos.y > 0
-  ) {
+  if (vec3_magnitude(p.spare) < 1.5 * scale) {
     // compute velocity, store in spare vector
     if (p.spare.x < 0) {
       // ball on left
@@ -937,8 +938,11 @@ function player_update(p: Player): void {
 
     // add velocity to ball
     vec3_add(p.ball.pos, p.ball.pos, p.spare)
+
+    // set temporary hit variable
+    p.hit = true
   } else {
-    vec3_zero(p.spare)
+    //vec3_zero(p.spare)
   }
 }
 
@@ -953,6 +957,11 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  if (p.hit) {
+    print('hit')
+  }
+  print(vec3_magnitude(p.spare))
 }
 
 /**
@@ -972,8 +981,8 @@ function ball(c: cam): Ball {
   const scale = 6
 
   return {
-    pos: vec3(-0.5 * scale, 2 * scale, 0),
-    vel: vec3(0, 1 * scale, 0),
+    pos: vec3(0, 2 * scale, 0),
+    vel: vec3(0, 0, 0),
     acc: vec3(0, -2.5 * scale, 0),
     screen_pos: vec3(),
     cam: c,
