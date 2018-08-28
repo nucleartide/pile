@@ -215,6 +215,20 @@ function vec3_dot(a: vec3, b: vec3): number {
   return a.x * b.x + a.y * b.y + a.z * b.z
 }
 
+function vec3_cross(out: vec3, a: vec3, b: vec3): void {
+  const ax = a.x
+  const ay = a.y
+  const az = a.z
+
+  const bx = b.x
+  const by = b.y
+  const bz = b.z
+
+  out.x = ay * bz - az * by
+  out.y = az * bx - ax * bz
+  out.z = ax * by - ay * bx
+}
+
 function vec3_scale(v: vec3, c: number): void {
   v.x *= c
   v.y *= c
@@ -299,6 +313,17 @@ function assert_vec3_equal(a: vec3, b: vec3): void {
   assert(a.y === b.y)
   assert(a.z === b.z)
 }
+
+/*
+{
+  const a = vec3(1, 0, 0)
+  const b = vec3(0, 1, 0)
+  const out = vec3()
+  vec3_cross(out, a, b)
+  assert_vec3_equal(out, vec3(0, 0, 1))
+  stop()
+}
+*/
 
 function vec3_zero(v: vec3): void {
   v.x = 0
@@ -816,8 +841,8 @@ interface Player {
   screen_pos: vec3
   cam: cam
   ball: Ball
-  hit: boolean
   spare: vec3
+  up: vec3
 }
 
 function player(c: cam, b: Ball): Player {
@@ -832,15 +857,12 @@ function player(c: cam, b: Ball): Player {
     screen_pos: vec3(),
     cam: c,
     ball: b,
-    hit: false,
     spare: vec3(),
+    up: vec3(0, 1, 0),
   }
 }
 
 function player_update(p: Player): void {
-  // temporary `hit` property
-  p.hit = false
-
   /**
    * Compute acceleration.
    *
@@ -886,12 +908,37 @@ function player_update(p: Player): void {
 
   const scale = 6
 
-  vec3_assign(p.spare, p.pos)
-  p.spare.y = 1 * scale
+  // compute the dist betweeen ball and player
+  // player's actual position is 1m above the ground
+  p.spare.x = p.ball.pos.x - p.pos.x
+  p.spare.y = p.ball.pos.y - p.pos.y + 1 * scale
+  p.spare.z = p.ball.pos.z - p.pos.z
 
-  if (vec3_dist(p.spare, p.ball.pos) < 1 * scale) {
-    p.hit = true
-    // TODO: add velocity to ball
+  // if the dist is less than 1m,
+  // the "swing" button is pressed,
+  // and the ball is still in the air
+  if (
+    vec3_magnitude(p.spare) < 1.5 * scale &&
+    btn(button.z) &&
+    p.ball.pos.y > 0
+  ) {
+    // compute velocity, store in spare vector
+    if (p.spare.x < 0) {
+      // ball on left
+      vec3_cross(p.spare, p.spare, p.up)
+    } else if (p.spare.x >= 0) {
+      // ball on right
+      vec3_cross(p.spare, p.up, p.spare)
+    }
+
+    // normalize velocity, scale by some factor
+    vec3_normalize(p.spare)
+    vec3_scale(p.spare, 1 * scale)
+
+    // add velocity to ball
+    vec3_add(p.ball.pos, p.ball.pos, p.spare)
+  } else {
+    vec3_zero(p.spare)
   }
 }
 
@@ -906,10 +953,6 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
-
-  if (p.hit) {
-    print('hit')
-  }
 }
 
 /**
@@ -930,8 +973,8 @@ function ball(c: cam): Ball {
 
   return {
     pos: vec3(-0.5 * scale, 2 * scale, 0),
-    vel: vec3(0, 0, 0),
-    acc: vec3(0, -5 * scale, 0),
+    vel: vec3(0, 1 * scale, 0),
+    acc: vec3(0, -2.5 * scale, 0),
     screen_pos: vec3(),
     cam: c,
     is_kinematic: false,
@@ -970,4 +1013,5 @@ declare var ball_update: (b: Ball) => void
 
 function ball_draw(b: Ball): void {
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
+  vec3_print(b.pos)
 }
