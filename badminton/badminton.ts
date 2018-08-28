@@ -920,8 +920,9 @@ function player_update(p: Player): void {
   p.spare.z = p.ball.pos.z - p.pos.z
 
   // if the dist is less than 1m,
-  // the "swing" button is pressed,
+  // the "swing" button is pressed, // TODO: button handling, press once
   // and the ball is still in the air
+  // TODO: consider different hit regions
   if (vec3_magnitude(p.spare) < 1.5 * scale) {
     // compute velocity, store in spare vector
     if (p.spare.x < 0) {
