@@ -836,6 +836,7 @@ interface Player {
   scale: number
   pos: vec3
   vel: vec3
+  vel60: vec3
   acc: vec3
   desired_speed: number
   screen_pos: vec3
@@ -853,6 +854,7 @@ function player(c: cam, b: Ball): Player {
     scale: scale,
     pos: vec3(-0.5 * scale, 0, 0),
     vel: vec3(),
+    vel60: vec3(),
     acc: vec3(),
     desired_speed: 10 * scale,
     screen_pos: vec3(),
@@ -893,20 +895,21 @@ function player_update(p: Player): void {
 
   const t = 0.5
   vec3_lerp(p.vel, p.vel, p.acc, t)
-  const v = vec3((p.vel.x * 1) / 60, (p.vel.y * 1) / 60, (p.vel.z * 1) / 60)
-  //vec3_scale(p.vel, 1 / 60) // TODO
 
   /**
    * Update position.
    */
 
-  vec3_add(p.pos, p.pos, v)
+  vec3_assign(p.vel60, p.vel)
+  vec3_scale(p.vel60, 1 / 60)
+  vec3_add(p.pos, p.pos, p.vel60)
 
   /**
    * Update screen position.
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
+  return
 
   /**
    * Swing at ball.
@@ -961,11 +964,8 @@ function player_draw(p: Player): void {
     col.orange
   )
 
-  if (p.hit) {
-    print('hit')
-  }
-  print(vec3_magnitude(p.spare))
-  print(p.ball.pos.y > 0)
+  //print(vec3_magnitude(p.spare))
+  //print(p.ball.pos.y > 0)
 }
 
 /**
@@ -975,7 +975,9 @@ function player_draw(p: Player): void {
 interface Ball {
   pos: vec3
   vel: vec3
+  vel60: vec3
   acc: vec3
+  acc60: vec3
   screen_pos: vec3
   cam: cam
   is_kinematic: boolean
@@ -985,9 +987,11 @@ function ball(c: cam): Ball {
   const scale = 6
 
   return {
-    pos: vec3(0, 2 * scale, 10 * scale),
+    pos: vec3(0, 2 * scale, 5 * scale),
     vel: vec3(1 * scale, 0, 0),
-    acc: vec3(0, 0, 0),
+    vel60: vec3(),
+    acc: vec3(0, -10 * scale, 0),
+    acc60: vec3(),
     screen_pos: vec3(),
     cam: c,
     is_kinematic: false,
@@ -1004,7 +1008,7 @@ declare var ball_update: (b: Ball) => void
       vec3_scale(spare, 1 / 60)
 
       // apply change in velocity.
-      //vec3_add(b.vel, b.vel, spare)
+      vec3_add(b.vel, b.vel, spare)
 
       // compute change in position for this frame.
       vec3_assign(spare, b.vel)
@@ -1015,9 +1019,11 @@ declare var ball_update: (b: Ball) => void
     }
 
     // bounds check.
+    /*
     if (b.pos.y < 0) {
       b.pos.y = 0
     }
+    */
 
     // compute new screen position.
     cam_project(b.cam, b.screen_pos, b.pos)
@@ -1026,6 +1032,4 @@ declare var ball_update: (b: Ball) => void
 
 function ball_draw(b: Ball): void {
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
-  vec3_print(b.pos)
-  vec3_print(b.vel)
 }
