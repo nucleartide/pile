@@ -211,6 +211,10 @@ function vec3_print(v: vec3): void {
   print(v.x + ', ' + v.y + ', ' + v.z)
 }
 
+function vec3_printh(v: vec3): void {
+  printh(v.x + ', ' + v.y + ', ' + v.z, 'test.log')
+}
+
 function vec3_dot(a: vec3, b: vec3): number {
   return a.x * b.x + a.y * b.y + a.z * b.z
 }
@@ -845,24 +849,28 @@ interface Player {
   spare: vec3
   up: vec3
   hit: boolean
+  player_to_ball: vec3
+  swing_time: number
 }
 
 function player(c: cam, b: Ball): Player {
-  const scale = 6
+  const meter = 6
 
   return {
-    scale: scale,
-    pos: vec3(-0.5 * scale, 0, 0),
+    scale: meter,
+    pos: vec3(-0.5 * meter, 0, 5 * meter),
     vel: vec3(),
     vel60: vec3(),
     acc: vec3(),
-    desired_speed: 10 * scale,
+    desired_speed: 10 * meter,
     screen_pos: vec3(),
     cam: c,
     ball: b,
     spare: vec3(),
     up: vec3(0, 1, 0),
     hit: false,
+    player_to_ball: vec3(),
+    swing_time: 0,
   }
 }
 
@@ -909,26 +917,60 @@ function player_update(p: Player): void {
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
-  return
+
+  /**
+   * Update swing state.
+   */
+
+  p.swing_time = max(p.swing_time - 1, 0)
 
   /**
    * Swing at ball.
    */
 
-  const scale = 6
+  const meter = 6
+  const second = 60
 
-  // compute the dist betweeen ball and player
-  // player's actual position is 1m above the ground
-  p.spare.x = p.ball.pos.x - p.pos.x
-  p.spare.y = p.ball.pos.y - p.pos.y + 1 * scale
-  p.spare.z = p.ball.pos.z - p.pos.z
+  // player's chest is ~1m above the ground
+  vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+  p.player_to_ball.y += 1 * meter
+  if (
+    vec3_magnitude(p.player_to_ball) < 2.5 * meter && // ball in range
+    p.ball.pos.y > 0 && // ball is still in air
+    p.swing_time < 0.1 && // not currently swinging
+    btn(button.z) // pressed the swing button
+  ) {
+    // enter a swing state
+    p.hit = true
+    p.swing_time = 1 * second
+
+    // TODO: consider different hit regions
+
+    // TODO: handle right side lob
+    // condition: below 1m
+    // condition: x > 0.2
+    if (
+      p.ball.pos.y < 1.5 * meter &&
+      p.player_to_ball.x > 0 * meter &&
+      p.player_to_ball.z <= 1
+    ) {
+      printh('right side lob', 'test.log')
+      // execute right side lob:
+      // slap up vector into player_to_ball vector
+      vec3_cross(p.spare, p.up, p.player_to_ball)
+      // depending on ball's dist from 1m, add to vertical velocity
+      p.spare.z -= 50
+      p.spare.y += (1 * meter - p.ball.pos.y) * 5 + 50
+      // add velocity to ball velocity
+      vec3_add(p.ball.vel, p.ball.vel, p.spare)
+      vec3_printh(p.spare)
+    }
+
+    // TODO: handle left side lob
+  }
   return
 
-  // if the dist is less than 1m,
-  // the "swing" button is pressed, // TODO: button handling, press once
-  // and the ball is still in the air
-  // TODO: consider different hit regions
-  if (vec3_magnitude(p.spare) < 2 * scale && p.ball.pos.y > 0) {
+  /*
     // compute velocity, store in spare vector
     if (p.spare.x < 0) {
       // ball on left
@@ -940,16 +982,11 @@ function player_update(p: Player): void {
 
     // normalize velocity, scale by some factor
     vec3_normalize(p.spare)
-    vec3_scale(p.spare, 1 * scale)
+    vec3_scale(p.spare, 1 * meter)
 
     // add velocity to ball
     vec3_add(p.ball.pos, p.ball.pos, p.spare)
-
-    // set temporary hit variable
-    p.hit = true
-  } else {
-    //vec3_zero(p.spare)
-  }
+  */
 }
 
 function player_draw(p: Player): void {
@@ -963,6 +1000,10 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  if (p.hit) {
+    print('hit')
+  }
 
   //print(vec3_magnitude(p.spare))
   //print(p.ball.pos.y > 0)
@@ -984,13 +1025,13 @@ interface Ball {
 }
 
 function ball(c: cam): Ball {
-  const scale = 6
+  const meter = 6
 
   return {
-    pos: vec3(0, 2 * scale, 5 * scale),
-    vel: vec3(1 * scale, 0, 0),
+    pos: vec3(0, 2 * meter, 5 * meter),
+    vel: vec3(0, 1 * meter, 0),
     vel60: vec3(),
-    acc: vec3(0, -10 * scale, 0),
+    acc: vec3(0, -10 * meter, 0),
     acc60: vec3(),
     screen_pos: vec3(),
     cam: c,
