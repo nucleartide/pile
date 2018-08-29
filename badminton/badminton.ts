@@ -968,7 +968,7 @@ function player_update(p: Player): void {
 
     // TODO: handle left side lob
     if (
-      p.ball.pos.y < 1.5 * meter &&
+      p.ball.pos.y < 1 * meter &&
       p.player_to_ball.x < 0 * meter &&
       p.player_to_ball.z <= 1
     ) {
@@ -984,7 +984,19 @@ function player_update(p: Player): void {
       vec3_printh(p.spare)
     }
 
-    // TODO: handle overhead hit
+    // TODO: handle left overhead hit
+    if (
+      p.ball.pos.y >= 1 * meter &&
+      p.player_to_ball.z <= 1 &&
+      p.player_to_ball.x < 0 * meter
+    ) {
+      printh('left overhead hit', 'test.log')
+      vec3_cross(p.spare, p.player_to_ball, p.up)
+      p.spare.z -= 50 * 3
+      p.spare.y += 10
+      //p.spare.y -= 10
+      vec3_add(p.ball.vel, p.ball.vel, p.spare)
+    }
   }
   return
 
@@ -1046,7 +1058,7 @@ function ball(c: cam): Ball {
   const meter = 6
 
   return {
-    pos: vec3(0, 2 * meter, 5 * meter),
+    pos: vec3(0, 3 * meter, 5 * meter),
     vel: vec3(0, 1 * meter, 0),
     vel60: vec3(),
     acc: vec3(0, -10 * meter, 0),
