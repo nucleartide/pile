@@ -967,6 +967,24 @@ function player_update(p: Player): void {
     }
 
     // TODO: handle left side lob
+    if (
+      p.ball.pos.y < 1.5 * meter &&
+      p.player_to_ball.x < 0 * meter &&
+      p.player_to_ball.z <= 1
+    ) {
+      printh('left side lob', 'test.log')
+      // execute right side lob:
+      // slap up vector into player_to_ball vector
+      vec3_cross(p.spare, p.player_to_ball, p.up)
+      // depending on ball's dist from 1m, add to vertical velocity
+      p.spare.z -= 50
+      p.spare.y += (1 * meter - p.ball.pos.y) * 5 + 50
+      // add velocity to ball velocity
+      vec3_add(p.ball.vel, p.ball.vel, p.spare)
+      vec3_printh(p.spare)
+    }
+
+    // TODO: handle overhead hit
   }
   return
 
