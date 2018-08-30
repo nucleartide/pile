@@ -1017,6 +1017,9 @@ function player_draw(p: Player): void {
   const width = 10
   const height = 25
 
+  // draw shadow
+  circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
+
   rectfill(
     round(p.screen_pos.x - width / 2),
     round(p.screen_pos.y - height),
@@ -1024,13 +1027,6 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
-
-  if (p.hit) {
-    print('hit')
-  }
-
-  //print(vec3_magnitude(p.spare))
-  //print(p.ball.pos.y > 0)
 }
 
 /**
