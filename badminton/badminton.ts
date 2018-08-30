@@ -950,7 +950,7 @@ function player_update(p: Player): void {
     // condition: below 1m
     // condition: x > 0.2
     if (
-      p.ball.pos.y < 1.5 * meter &&
+      p.ball.pos.y < 1 * meter &&
       p.player_to_ball.x > 0 * meter &&
       p.player_to_ball.z <= 1
     ) {
@@ -997,26 +997,20 @@ function player_update(p: Player): void {
       //p.spare.y -= 10
       vec3_add(p.ball.vel, p.ball.vel, p.spare)
     }
-  }
-  return
 
-  /*
-    // compute velocity, store in spare vector
-    if (p.spare.x < 0) {
-      // ball on left
-      vec3_cross(p.spare, p.spare, p.up)
-    } else if (p.spare.x >= 0) {
-      // ball on right
-      vec3_cross(p.spare, p.up, p.spare)
+    // TODO: handle right overhead hit
+    if (
+      p.ball.pos.y >= 1 * meter &&
+      p.player_to_ball.z <= 1 &&
+      p.player_to_ball.x > 0 * meter
+    ) {
+      printh('right overhead hit', 'test.log')
+      vec3_cross(p.spare, p.up, p.player_to_ball)
+      p.spare.z -= 50 * 3
+      p.spare.y += 10
+      vec3_add(p.ball.vel, p.ball.vel, p.spare)
     }
-
-    // normalize velocity, scale by some factor
-    vec3_normalize(p.spare)
-    vec3_scale(p.spare, 1 * meter)
-
-    // add velocity to ball
-    vec3_add(p.ball.pos, p.ball.pos, p.spare)
-  */
+  }
 }
 
 function player_draw(p: Player): void {
