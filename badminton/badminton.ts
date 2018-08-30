@@ -1035,11 +1035,13 @@ function player_draw(p: Player): void {
 
 interface Ball {
   pos: vec3
+  shadow_pos: vec3
   vel: vec3
   vel60: vec3
   acc: vec3
   acc60: vec3
   screen_pos: vec3
+  screen_shadow_pos: vec3
   cam: cam
   is_kinematic: boolean
 }
@@ -1049,11 +1051,13 @@ function ball(c: cam): Ball {
 
   return {
     pos: vec3(0, 3 * meter, 5 * meter),
+    shadow_pos: vec3(),
     vel: vec3(0, 1 * meter, 0),
     vel60: vec3(),
     acc: vec3(0, -10 * meter, 0),
     acc60: vec3(),
     screen_pos: vec3(),
+    screen_shadow_pos: vec3(),
     cam: c,
     is_kinematic: false,
   }
@@ -1080,17 +1084,28 @@ declare var ball_update: (b: Ball) => void
     }
 
     // bounds check.
-    /*
     if (b.pos.y < 0) {
       b.pos.y = 0
     }
-    */
 
     // compute new screen position.
     cam_project(b.cam, b.screen_pos, b.pos)
+
+    // compute new screen position for shadow
+    vec3_assign(b.shadow_pos, b.pos)
+    b.shadow_pos.y = 0
+    cam_project(b.cam, b.screen_shadow_pos, b.shadow_pos)
   }
 }
 
 function ball_draw(b: Ball): void {
+  circfill(
+    round(b.screen_shadow_pos.x),
+    round(b.screen_shadow_pos.y),
+    1,
+    col.dark_blue
+  )
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
+  vec3_print(b.pos)
+  vec3_print(b.shadow_pos)
 }
