@@ -38,7 +38,9 @@ enum button {
  */
 
 enum game_state {
+  serve,
   playing,
+  post_rally,
 }
 
 let current_game_state: game_state
