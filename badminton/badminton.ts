@@ -58,7 +58,8 @@ _update60 = function(): void {
 
   if (
     current_game_state === game_state.playing ||
-    current_game_state === game_state.serve
+    current_game_state === game_state.serve ||
+    current_game_state === game_state.post_rally
   ) {
     game_update(g)
   }
@@ -69,7 +70,8 @@ _draw = function(): void {
 
   if (
     current_game_state === game_state.playing ||
-    current_game_state === game_state.serve
+    current_game_state === game_state.serve ||
+    current_game_state === game_state.post_rally
   ) {
     game_draw(g)
   }
@@ -786,6 +788,7 @@ interface game {
   player: Player
   ball: Ball
   zero_vec: vec3
+  post_rally_timer: number
 }
 
 function game(): game {
@@ -816,6 +819,7 @@ function game(): game {
     player: player(c, b),
     ball: b,
     zero_vec: vec3(),
+    post_rally_timer: 0,
   }
 
   return game_instance
@@ -825,6 +829,25 @@ function game_update(g: game): void {
   polygon_update(g.court)
   player_update(g.player)
   ball_update(g.ball)
+
+  // update post rally timer
+  if (g.post_rally_timer > 0) {
+    g.post_rally_timer -= 1
+    printh('not working:' + g.post_rally_timer, 'test.log')
+    if (g.post_rally_timer === 0) {
+      next_game_state = game_state.serve
+    }
+  } else {
+    printh('wtf', 'test.log')
+  }
+
+  // set timer
+  if (
+    current_game_state === game_state.playing &&
+    next_game_state === game_state.post_rally
+  ) {
+    g.post_rally_timer = 3 * 60
+  }
 }
 
 type DrawFunction = (g: game) => void
@@ -845,6 +868,9 @@ function game_draw(g: game): void {
   for (let i = 0; i < order.length; i++) {
     order[i][1](g)
   }
+
+  print(current_game_state)
+  print(g.post_rally_timer)
 }
 
 function game_draw_net(g: game): void {
@@ -1161,10 +1187,7 @@ declare var ball_update: (b: Ball) => void
       vec3_scale(spare, 1 / 60)
 
       // apply change in velocity.
-      printh('wtf:', 'test.log')
-      vec3_printh(b.vel)
       vec3_add(b.vel, b.vel, spare)
-      vec3_printh(b.vel)
 
       // compute change in position for this frame.
       vec3_assign(spare, b.vel)
@@ -1177,6 +1200,7 @@ declare var ball_update: (b: Ball) => void
     // bounds check.
     if (b.pos.y < 0) {
       b.pos.y = 0
+      next_game_state = game_state.post_rally
     }
 
     // compute new screen position.
