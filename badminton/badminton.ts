@@ -838,17 +838,13 @@ function game_draw(g: game): void {
   }
 
   clear_order()
-  printh('after clear_order:' + order.length, 'test.log')
   insert_into_order(g.zero_vec, game_draw_net)
   insert_into_order(g.player.pos, game_draw_player)
   insert_into_order(g.ball.pos, game_draw_ball)
-  printh('after insert:' + order.length, 'test.log')
 
   for (let i = 0; i < order.length; i++) {
     order[i][1](g)
   }
-
-  //  printh(order.length, 'test.log')
 }
 
 function game_draw_net(g: game): void {
@@ -974,14 +970,17 @@ function player_update(p: Player): void {
   cam_project(p.cam, p.screen_pos, p.pos)
 
   /**
+   * units.
+   */
+
+  const second = 60
+
+  /**
    * TODO: handle ball serve
    */
 
-  // p.ball.is_kinematic = current_game_state === game_state.serve
-  /*
+  p.ball.is_kinematic = current_game_state === game_state.serve
   if (current_game_state === game_state.serve) {
-    p.ball.is_kinematic = true
-
     p.ball.pos.x = p.pos.x + 0.4 * meter_unit
     p.ball.pos.y = p.pos.y + 1.0 * meter_unit
     p.ball.pos.z = p.pos.z
@@ -992,20 +991,18 @@ function player_update(p: Player): void {
 
       // give ball upward velocity
       p.ball.vel.x = 0
-      p.ball.vel.y = 0 // 5 * meter_unit
+      p.ball.vel.y = 5 * meter_unit
       p.ball.vel.z = 0
-
-      p.ball.acc.x = 0
-      p.ball.acc.y = 0
-      p.ball.acc.z = 0
 
       // change state to playing
       next_game_state = game_state.playing
+
+      // set swing time
+      p.swing_time = 1 * second
     }
 
     return
   }
-  */
 
   /**
    * Update swing state.
@@ -1018,7 +1015,6 @@ function player_update(p: Player): void {
    */
 
   const meter = 6
-  const second = 60
 
   // player's chest is ~1m above the ground
   vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
@@ -1116,6 +1112,9 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  //print('hit:')
+  //print(p.hit)
 }
 
 /**
@@ -1162,7 +1161,10 @@ declare var ball_update: (b: Ball) => void
       vec3_scale(spare, 1 / 60)
 
       // apply change in velocity.
+      printh('wtf:', 'test.log')
+      vec3_printh(b.vel)
       vec3_add(b.vel, b.vel, spare)
+      vec3_printh(b.vel)
 
       // compute change in position for this frame.
       vec3_assign(spare, b.vel)
@@ -1195,6 +1197,8 @@ function ball_draw(b: Ball): void {
     col.dark_blue
   )
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
-  vec3_print(b.vel)
-  vec3_print(b.shadow_pos)
+  //print(b.is_kinematic)
+  //vec3_print(b.pos)
+  //vec3_print(b.vel)
+  //vec3_print(b.acc)
 }
