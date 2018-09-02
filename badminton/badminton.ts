@@ -48,15 +48,18 @@ let next_game_state: game_state
 let g: game
 
 _init = function(): void {
-  current_game_state = game_state.playing
-  next_game_state = game_state.playing
+  current_game_state = game_state.serve
+  next_game_state = game_state.serve
   g = game()
 }
 
 _update60 = function(): void {
   current_game_state = next_game_state
 
-  if (current_game_state === game_state.playing) {
+  if (
+    current_game_state === game_state.playing ||
+    current_game_state === game_state.serve
+  ) {
     game_update(g)
   }
 }
@@ -64,7 +67,10 @@ _update60 = function(): void {
 _draw = function(): void {
   cls(col.dark_purple)
 
-  if (current_game_state === game_state.playing) {
+  if (
+    current_game_state === game_state.playing ||
+    current_game_state === game_state.serve
+  ) {
     game_draw(g)
   }
 }
@@ -822,7 +828,7 @@ function game_update(g: game): void {
 }
 
 type DrawFunction = (g: game) => void
-const order: Array<[vec3, DrawFunction]> = []
+let order: Array<[vec3, DrawFunction]> = []
 function game_draw(g: game): void {
   polygon_draw(g.court)
 
@@ -832,13 +838,17 @@ function game_draw(g: game): void {
   }
 
   clear_order()
+  printh('after clear_order:' + order.length, 'test.log')
   insert_into_order(g.zero_vec, game_draw_net)
   insert_into_order(g.player.pos, game_draw_player)
   insert_into_order(g.ball.pos, game_draw_ball)
+  printh('after insert:' + order.length, 'test.log')
 
   for (let i = 0; i < order.length; i++) {
     order[i][1](g)
   }
+
+  //  printh(order.length, 'test.log')
 }
 
 function game_draw_net(g: game): void {
@@ -855,10 +865,7 @@ function game_draw_ball(g: game): void {
 }
 
 function clear_order(): void {
-  for (let i = 0; i < order.length; i++) {
-    // @ts-ignore
-    order[i] = null
-  }
+  order = []
 }
 
 function insert_into_order(pos: vec3, draw_fn: (g: game) => void): void {
@@ -873,11 +880,10 @@ function insert_into_order(pos: vec3, draw_fn: (g: game) => void): void {
       // then insert
       // TODO: memory allocation, not super important though
       order[i] = [pos, draw_fn]
-
       return
     }
   }
-  order[order.length] = [pos, draw_fn]
+  add(order, [pos, draw_fn])
 }
 
 /**
@@ -922,6 +928,7 @@ function player(c: cam, b: Ball): Player {
   }
 }
 
+const meter_unit: number = 6
 function player_update(p: Player): void {
   // temporary hit variable
   p.hit = false
@@ -965,6 +972,40 @@ function player_update(p: Player): void {
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
+
+  /**
+   * TODO: handle ball serve
+   */
+
+  // p.ball.is_kinematic = current_game_state === game_state.serve
+  /*
+  if (current_game_state === game_state.serve) {
+    p.ball.is_kinematic = true
+
+    p.ball.pos.x = p.pos.x + 0.4 * meter_unit
+    p.ball.pos.y = p.pos.y + 1.0 * meter_unit
+    p.ball.pos.z = p.pos.z
+
+    if (btn(button.z)) {
+      // release ball
+      p.ball.is_kinematic = false
+
+      // give ball upward velocity
+      p.ball.vel.x = 0
+      p.ball.vel.y = 0 // 5 * meter_unit
+      p.ball.vel.z = 0
+
+      p.ball.acc.x = 0
+      p.ball.acc.y = 0
+      p.ball.acc.z = 0
+
+      // change state to playing
+      next_game_state = game_state.playing
+    }
+
+    return
+  }
+  */
 
   /**
    * Update swing state.
@@ -1154,6 +1195,6 @@ function ball_draw(b: Ball): void {
     col.dark_blue
   )
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
-  //vec3_print(b.pos)
-  //vec3_print(b.shadow_pos)
+  vec3_print(b.vel)
+  vec3_print(b.shadow_pos)
 }
