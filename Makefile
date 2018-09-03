@@ -55,6 +55,7 @@ carts/build.p8: badminton/badminton.lua
 	@echo '__lua__' >> carts/build.p8
 	@echo 'export("badminton.html")' >> carts/build.p8
 	@cat badminton/badminton.lua >> carts/build.p8
+	@tail -n +5 carts/badminton-data.p8 >> carts/build.p8
 
 #
 # Continuous deployment.
