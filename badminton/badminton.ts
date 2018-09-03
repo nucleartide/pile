@@ -66,7 +66,7 @@ _update60 = function(): void {
 }
 
 _draw = function(): void {
-  cls(col.dark_purple)
+  cls(col.blue)
 
   if (
     current_game_state === game_state.playing ||
@@ -804,7 +804,7 @@ function game(): game {
   c.x_angle = -0.08
   c.pos.y = -0.5 * s
 
-  const p = polygon(col.dark_green, c, [
+  const p = polygon(col.peach, c, [
     vec3(-3.8 * s, 0, -7.7 * s),
     vec3(-3.8 * s, 0, 7.7 * s),
     vec3(3.8 * s, 0, 7.7 * s),
@@ -897,9 +897,8 @@ function game_draw(g: game): void {
 
   //print(current_game_state)
   //print(g.post_rally_timer)
-  print(g.player_score)
-  print('-')
-  print(g.opponent_score)
+  const str = g.player_score + ' - ' + g.opponent_score
+  print(str, 64 - str.length * 2, 3, col.white)
 }
 
 function game_draw_net(g: game): void {
