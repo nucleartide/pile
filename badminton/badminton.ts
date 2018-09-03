@@ -789,6 +789,8 @@ interface game {
   ball: Ball
   zero_vec: vec3
   post_rally_timer: number
+  player_score: number
+  opponent_score: number
 }
 
 function game(): game {
@@ -820,6 +822,8 @@ function game(): game {
     ball: b,
     zero_vec: vec3(),
     post_rally_timer: 0,
+    player_score: 0,
+    opponent_score: 0,
   }
 
   return game_instance
@@ -848,6 +852,28 @@ function game_update(g: game): void {
   ) {
     g.post_rally_timer = 3 * 60
   }
+
+  if (
+    // about to transition to post rally state
+    current_game_state === game_state.playing &&
+    next_game_state === game_state.post_rally
+  ) {
+    // TODO: check if ball is in valid hit region.
+    if (
+      g.ball.pos.x > -3.05 * 6 &&
+      g.ball.pos.x < 3.05 * 6 &&
+      g.ball.pos.z < 0 * 6 &&
+      g.ball.pos.z > -6.7 * 6
+    ) {
+      // then we're in a valid hit region.
+      // add to player score
+      g.player_score += 1
+    } else {
+      g.opponent_score += 1
+    }
+
+    // TODO: display score
+  }
 }
 
 type DrawFunction = (g: game) => void
@@ -869,8 +895,11 @@ function game_draw(g: game): void {
     order[i][1](g)
   }
 
-  print(current_game_state)
-  print(g.post_rally_timer)
+  //print(current_game_state)
+  //print(g.post_rally_timer)
+  print(g.player_score)
+  print('-')
+  print(g.opponent_score)
 }
 
 function game_draw_net(g: game): void {
