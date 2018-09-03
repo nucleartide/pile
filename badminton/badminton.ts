@@ -1248,7 +1248,7 @@ function ball_draw(b: Ball): void {
     1,
     col.dark_blue
   )
-  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.green)
+  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.yellow)
   //print(b.is_kinematic)
   //vec3_print(b.pos)
   //vec3_print(b.vel)
