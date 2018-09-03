@@ -40,12 +40,19 @@ carts/badminton-data.p8: carts/badminton-writer.p8
 # Continuous delivery.
 #
 
+# Copy HTML export over to docs folder.
+docs/badminton.html: carts/badminton.html
+	@mkdir -p docs/
+	@mv carts/badminton.html docs/
+
 # Build HTML export.
-badminton.html: carts/build.p8
+carts/badminton.html: carts/build.p8
 	@open -na PICO-8 --args \
 		-gif_scale 10 \
 		-home $(shell pwd) \
 		-run $(shell pwd)/carts/build.p8
+	@sleep 10
+	@pkill -f PICO-8
 
 # Build builder cart.
 carts/build.p8: badminton/badminton.lua
