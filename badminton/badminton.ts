@@ -1,5 +1,7 @@
 ///<reference path="../@types/pico8.d.ts">
 
+const meter_unit: number = 6
+
 enum col {
   black,
   dark_blue,
@@ -791,6 +793,7 @@ interface game {
   post_rally_timer: number
   player_score: number
   opponent_score: number
+  net: Net
 }
 
 function game(): game {
@@ -813,6 +816,31 @@ function game(): game {
 
   const b = ball(c)
 
+  const n = net(net_lines)
+
+  /*
+  var [collides, intersection] = net_collides_with(
+    n,
+    vec3(0, 1.6 * meter_unit, -1 * meter_unit),
+    vec3(0, 1.6 * meter_unit, -2 * meter_unit)
+  )
+  assert(!collides, 'does not collide')
+  var [collides, intersection] = net_collides_with(
+    n,
+    vec3(-5 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
+    vec3(-7 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
+  )
+  assert(!collides, 'does not collide')
+  var [collides, intersection] = net_collides_with(
+    n,
+    vec3(-3 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
+    vec3(3 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
+  )
+  assert(collides, 'collides')
+  if (intersection) vec3_print(intersection)
+  stop()
+  */
+
   const game_instance = {
     court_lines: court_lines,
     net_lines: net_lines,
@@ -824,6 +852,7 @@ function game(): game {
     post_rally_timer: 0,
     player_score: 0,
     opponent_score: 0,
+    net: n,
   }
 
   return game_instance
@@ -978,7 +1007,6 @@ function player(c: cam, b: Ball): Player {
   }
 }
 
-const meter_unit: number = 6
 function player_update(p: Player): void {
   // temporary hit variable
   p.hit = false
@@ -1253,4 +1281,54 @@ function ball_draw(b: Ball): void {
   //vec3_print(b.pos)
   //vec3_print(b.vel)
   //vec3_print(b.acc)
+}
+
+/**
+ * -->8 7. net.
+ */
+
+interface Net {
+  lines: Array<line>
+  net_top: number
+  net_bottom: number
+  left_pole: number
+  right_pole: number
+}
+
+function net(lines: Array<line>): Net {
+  return {
+    lines: lines,
+    net_top: 1.5 * meter_unit,
+    net_bottom: 0.9 * meter_unit,
+    left_pole: -2.95 * meter_unit,
+    right_pole: 2.95 * meter_unit,
+  }
+}
+
+/** !TupleReturn */
+function net_collides_with(
+  n: Net,
+  prev_pos: vec3,
+  next_pos: vec3
+): [true, vec3] | [false, null] {
+  // z = mx + z0, set z to 0 and solve for x
+  const z0 = prev_pos.z
+  const m = (next_pos.z - prev_pos.z) / (next_pos.x - prev_pos.x)
+  const x = -z0 / m
+  const x_at_net = prev_pos.x + x
+  const x_in_range = n.left_pole <= x_at_net && x_at_net <= n.right_pole
+  if (!x_in_range) {
+    return [false, null]
+  }
+
+  // z = m2*y + z0, set z to 0 and solve for y
+  const m2 = (next_pos.z - prev_pos.z) / (next_pos.y - prev_pos.y)
+  const y = -z0 / m2
+  const y_at_net = prev_pos.y + y
+  const y_in_range = n.net_bottom <= y_at_net && y_at_net < n.net_top
+  if (!y_in_range) {
+    return [false, null]
+  }
+
+  return [true, vec3(x_at_net, y_at_net, 0)]
 }
