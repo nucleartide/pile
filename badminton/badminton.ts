@@ -814,9 +814,8 @@ function game(): game {
     vec3(3.8 * s, 0, -7.7 * s),
   ])
 
-  const b = ball(c)
-
   const n = net(net_lines)
+  const b = ball(c, n)
 
   /*
   var [collides, intersection] = net_collides_with(
@@ -1214,9 +1213,10 @@ interface Ball {
   screen_shadow_pos: vec3
   cam: cam
   is_kinematic: boolean
+  net: Net
 }
 
-function ball(c: cam): Ball {
+function ball(c: cam, n: Net): Ball {
   const meter = 6
 
   return {
@@ -1230,6 +1230,7 @@ function ball(c: cam): Ball {
     screen_shadow_pos: vec3(),
     cam: c,
     is_kinematic: false,
+    net: n,
   }
 }
 
@@ -1248,6 +1249,12 @@ declare var ball_update: (b: Ball) => void
       // compute change in position for this frame.
       vec3_assign(spare, b.vel)
       vec3_scale(spare, 1 / 60)
+
+      // TODO
+      // check if there is an intersection
+      // if there is,
+      //   set the position to slightly (in front of || behind) the net
+      //   reverse the z-component of velocity
 
       // apply change in position.
       vec3_add(b.pos, b.pos, spare)
