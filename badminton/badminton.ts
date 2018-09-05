@@ -1265,10 +1265,10 @@ declare var ball_update: (b: Ball) => void
         b.pos.y = intersection.y
         if (b.pos.z > 0) {
           // set position to slightly in front of net
-          b.pos.z = 1
+          b.pos.z = 5
         } else if (b.pos.z < 0) {
           // set position to slightly behind net
-          b.pos.z = -1
+          b.pos.z = -5
         } else {
           assert(false)
         }
