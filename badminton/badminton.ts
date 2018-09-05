@@ -865,12 +865,11 @@ function game_update(g: game): void {
   // update post rally timer
   if (g.post_rally_timer > 0) {
     g.post_rally_timer -= 1
-    printh('not working:' + g.post_rally_timer, 'test.log')
     if (g.post_rally_timer === 0) {
       next_game_state = game_state.serve
     }
   } else {
-    printh('wtf', 'test.log')
+    // printh('wtf', 'test.log')
   }
 
   // set timer
@@ -1237,6 +1236,7 @@ function ball(c: cam, n: Net): Ball {
 declare var ball_update: (b: Ball) => void
 {
   const spare = vec3()
+  const next_pos = vec3()
   ball_update = (b: Ball): void => {
     if (!b.is_kinematic && b.pos.y > 0) {
       // compute change in velocity for this frame.
@@ -1252,12 +1252,38 @@ declare var ball_update: (b: Ball) => void
 
       // TODO
       // check if there is an intersection
-      // if there is,
-      //   set the position to slightly (in front of || behind) the net
-      //   reverse the z-component of velocity
+      vec3_zero(next_pos)
+      vec3_add(next_pos, b.pos, spare)
+      const [intersects, intersection] = net_collides_with(
+        b.net,
+        b.pos,
+        next_pos
+      )
+      if (intersects && intersection) {
+        // if in front of net
+        b.pos.x = intersection.x
+        b.pos.y = intersection.y
+        if (b.pos.z > 0) {
+          // set position to slightly in front of net
+          b.pos.z = 1
+        } else if (b.pos.z < 0) {
+          // set position to slightly behind net
+          b.pos.z = -1
+        } else {
+          assert(false)
+        }
+        // reverse z-component of velocity
+        b.vel.z = -b.vel.z
+      } else {
+        vec3_assign(spare, b.vel)
+        vec3_scale(spare, 1 / 60)
 
-      // apply change in position.
-      vec3_add(b.pos, b.pos, spare)
+        // apply change in position.
+        vec3_add(b.pos, b.pos, spare)
+
+        // TODO: temporary
+        // b.pos.y = 1.2 * meter_unit
+      }
     }
 
     // bounds check.
@@ -1285,9 +1311,9 @@ function ball_draw(b: Ball): void {
   )
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.yellow)
   //print(b.is_kinematic)
-  //vec3_print(b.pos)
-  //vec3_print(b.vel)
-  //vec3_print(b.acc)
+  vec3_print(b.pos)
+  vec3_print(b.vel)
+  vec3_print(b.acc)
 }
 
 /**
@@ -1320,9 +1346,14 @@ function net_collides_with(
 ): [true, vec3] | [false, null] {
   // z = mx + z0, set z to 0 and solve for x
   const z0 = prev_pos.z
-  const m = (next_pos.z - prev_pos.z) / (next_pos.x - prev_pos.x)
-  const x = -z0 / m
-  const x_at_net = prev_pos.x + x
+  let x_at_net: number
+  if (next_pos.x - prev_pos.x < 0.1) {
+    x_at_net = prev_pos.x
+  } else {
+    const m = (next_pos.z - prev_pos.z) / (next_pos.x - prev_pos.x)
+    const diff = -z0 / m
+    x_at_net = prev_pos.x + diff
+  }
   const x_in_range = n.left_pole <= x_at_net && x_at_net <= n.right_pole
   if (!x_in_range) {
     return [false, null]
@@ -1330,6 +1361,7 @@ function net_collides_with(
 
   // z = m2*y + z0, set z to 0 and solve for y
   const m2 = (next_pos.z - prev_pos.z) / (next_pos.y - prev_pos.y)
+  printh('m2:' + m2, 'test.log')
   const y = -z0 / m2
   const y_at_net = prev_pos.y + y
   const y_in_range = n.net_bottom <= y_at_net && y_at_net < n.net_top
