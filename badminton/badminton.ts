@@ -48,6 +48,7 @@ enum game_state {
 let current_game_state: game_state
 let next_game_state: game_state
 let g: game
+let server: Player
 
 _init = function(): void {
   current_game_state = game_state.serve
@@ -841,12 +842,14 @@ function game(): game {
   stop()
   */
 
+  const player_user = player(c, b, -0.5 * meter_unit, 0, 5 * meter_unit)
+
   const game_instance = {
     court_lines: court_lines,
     net_lines: net_lines,
     cam: c,
     court: p,
-    player: player(c, b, -0.5 * meter_unit, 0, 5 * meter_unit),
+    player: player_user,
     opponent: player(c, b, -0.5 * meter_unit, 0, -5 * meter_unit),
     ball: b,
     zero_vec: vec3(),
@@ -854,8 +857,10 @@ function game(): game {
     player_score: 0,
     opponent_score: 0,
     net: n,
+    server: player_user,
   }
 
+  server = player_user
   return game_instance
 }
 
@@ -1067,7 +1072,7 @@ function player_update(p: Player): void {
    */
 
   p.ball.is_kinematic = current_game_state === game_state.serve
-  if (current_game_state === game_state.serve) {
+  if (current_game_state === game_state.serve && server === p) {
     p.ball.pos.x = p.pos.x + 0.4 * meter_unit
     p.ball.pos.y = p.pos.y + 1.0 * meter_unit
     p.ball.pos.z = p.pos.z
