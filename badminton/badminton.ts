@@ -842,7 +842,14 @@ function game(): game {
   stop()
   */
 
-  const player_user = player(c, b, -0.5 * meter_unit, 0, 5 * meter_unit)
+  const player_user = player(
+    c,
+    b,
+    -0.5 * meter_unit,
+    0,
+    5 * meter_unit,
+    player_keyboard_input
+  )
 
   const game_instance = {
     court_lines: court_lines,
@@ -850,7 +857,7 @@ function game(): game {
     cam: c,
     court: p,
     player: player_user,
-    opponent: player(c, b, -0.5 * meter_unit, 0, -5 * meter_unit),
+    opponent: player(c, b, -0.5 * meter_unit, 0, -5 * meter_unit, player_ai),
     ball: b,
     zero_vec: vec3(),
     post_rally_timer: 0,
@@ -994,9 +1001,17 @@ interface Player {
   hit: boolean
   player_to_ball: vec3
   swing_time: number
+  input_method: (p: Player) => void
 }
 
-function player(c: cam, b: Ball, x: number, y: number, z: number): Player {
+function player(
+  c: cam,
+  b: Ball,
+  x: number,
+  y: number,
+  z: number,
+  input_method: (p: Player) => void
+): Player {
   const meter = 6
 
   return {
@@ -1014,8 +1029,18 @@ function player(c: cam, b: Ball, x: number, y: number, z: number): Player {
     hit: false,
     player_to_ball: vec3(),
     swing_time: 0,
+    input_method: input_method,
   }
 }
+
+function player_keyboard_input(p: Player): void {
+  if (btn(button.left)) p.acc.x -= p.desired_speed
+  if (btn(button.right)) p.acc.x += p.desired_speed
+  if (btn(button.up)) p.acc.z -= p.desired_speed
+  if (btn(button.down)) p.acc.z += p.desired_speed
+}
+
+function player_ai(p: Player): void {}
 
 function player_update(p: Player): void {
   // temporary hit variable
@@ -1028,10 +1053,7 @@ function player_update(p: Player): void {
    */
 
   vec3_zero(p.acc)
-  if (btn(button.left)) p.acc.x -= p.desired_speed
-  if (btn(button.right)) p.acc.x += p.desired_speed
-  if (btn(button.up)) p.acc.z -= p.desired_speed
-  if (btn(button.down)) p.acc.z += p.desired_speed
+  p.input_method(p)
 
   /**
    * Normalize & scale acceleration.
