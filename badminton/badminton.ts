@@ -788,6 +788,7 @@ interface game {
   cam: cam
   court: polygon
   player: Player
+  opponent: Player
   ball: Ball
   zero_vec: vec3
   post_rally_timer: number
@@ -845,7 +846,8 @@ function game(): game {
     net_lines: net_lines,
     cam: c,
     court: p,
-    player: player(c, b),
+    player: player(c, b, -0.5 * meter_unit, 0, 5 * meter_unit),
+    opponent: player(c, b, -0.5 * meter_unit, 0, -5 * meter_unit),
     ball: b,
     zero_vec: vec3(),
     post_rally_timer: 0,
@@ -860,6 +862,7 @@ function game(): game {
 function game_update(g: game): void {
   polygon_update(g.court)
   player_update(g.player)
+  player_update(g.opponent)
   ball_update(g.ball)
 
   // update post rally timer
@@ -916,6 +919,7 @@ function game_draw(g: game): void {
   clear_order()
   insert_into_order(g.zero_vec, game_draw_net)
   insert_into_order(g.player.pos, game_draw_player)
+  insert_into_order(g.opponent.pos, game_draw_opponent)
   insert_into_order(g.ball.pos, game_draw_ball)
 
   for (let i = 0; i < order.length; i++) {
@@ -936,6 +940,9 @@ function game_draw_net(g: game): void {
 }
 function game_draw_player(g: game): void {
   player_draw(g.player)
+}
+function game_draw_opponent(g: game): void {
+  player_draw(g.opponent)
 }
 function game_draw_ball(g: game): void {
   ball_draw(g.ball)
@@ -984,12 +991,12 @@ interface Player {
   swing_time: number
 }
 
-function player(c: cam, b: Ball): Player {
+function player(c: cam, b: Ball, x: number, y: number, z: number): Player {
   const meter = 6
 
   return {
     scale: meter,
-    pos: vec3(-0.5 * meter, 0, 5 * meter),
+    pos: vec3(x, y, z),
     vel: vec3(),
     vel60: vec3(),
     acc: vec3(),
@@ -1268,10 +1275,10 @@ declare var ball_update: (b: Ball) => void
         b.pos.y = intersection.y
         if (b.pos.z > 0) {
           // set position to slightly in front of net
-          b.pos.z = 5
+          b.pos.z = 1
         } else if (b.pos.z < 0) {
           // set position to slightly behind net
-          b.pos.z = -5
+          b.pos.z = -1
         } else {
           assert(false)
         }
