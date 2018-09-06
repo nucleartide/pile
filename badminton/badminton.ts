@@ -1213,6 +1213,7 @@ interface Ball {
   cam: cam
   is_kinematic: boolean
   net: Net
+  intersects: boolean
 }
 
 function ball(c: cam, n: Net): Ball {
@@ -1230,6 +1231,7 @@ function ball(c: cam, n: Net): Ball {
     cam: c,
     is_kinematic: false,
     net: n,
+    intersects: false,
   }
 }
 
@@ -1259,6 +1261,7 @@ declare var ball_update: (b: Ball) => void
         b.pos,
         next_pos
       )
+      b.intersects = intersects
       if (intersects && intersection) {
         // if in front of net
         b.pos.x = intersection.x
@@ -1314,6 +1317,8 @@ function ball_draw(b: Ball): void {
   vec3_print(b.pos)
   vec3_print(b.vel)
   vec3_print(b.acc)
+  print('intersects:')
+  print(b.intersects)
 }
 
 /**
@@ -1344,6 +1349,12 @@ function net_collides_with(
   prev_pos: vec3,
   next_pos: vec3
 ): [true, vec3] | [false, null] {
+  if (
+    !((prev_pos.z > 0 && next_pos.z < 0) || (prev_pos.z < 0 && next_pos.z > 0))
+  ) {
+    return [false, null]
+  }
+
   // z = mx + z0, set z to 0 and solve for x
   const z0 = prev_pos.z
   let x_at_net: number
@@ -1369,5 +1380,8 @@ function net_collides_with(
     return [false, null]
   }
 
+  printh('collides', 'test.log')
+  vec3_printh(prev_pos)
+  vec3_printh(next_pos)
   return [true, vec3(x_at_net, y_at_net, 0)]
 }
