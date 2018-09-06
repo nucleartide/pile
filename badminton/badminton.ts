@@ -1137,7 +1137,7 @@ function player_update(p: Player): void {
       p.player_to_ball.x < 0 * meter &&
       p.player_to_ball.z <= 1
     ) {
-      printh('left side lob', 'test.log')
+      //printh('left side lob', 'test.log')
       // execute right side lob:
       // slap up vector into player_to_ball vector
       vec3_cross(p.spare, p.player_to_ball, p.up)
@@ -1146,7 +1146,7 @@ function player_update(p: Player): void {
       p.spare.y += (1 * meter - p.ball.pos.y) * 5 + 50
       // add velocity to ball velocity
       vec3_add(p.ball.vel, p.ball.vel, p.spare)
-      vec3_printh(p.spare)
+      //vec3_printh(p.spare)
     }
 
     // TODO: handle left overhead hit
@@ -1155,7 +1155,7 @@ function player_update(p: Player): void {
       p.player_to_ball.z <= 1 &&
       p.player_to_ball.x < 0 * meter
     ) {
-      printh('left overhead hit', 'test.log')
+      //printh('left overhead hit', 'test.log')
       vec3_cross(p.spare, p.player_to_ball, p.up)
       p.spare.z -= 50 * 3
       p.spare.y += 10
@@ -1169,7 +1169,7 @@ function player_update(p: Player): void {
       p.player_to_ball.z <= 1 &&
       p.player_to_ball.x > 0 * meter
     ) {
-      printh('right overhead hit', 'test.log')
+      //printh('right overhead hit', 'test.log')
       vec3_cross(p.spare, p.up, p.player_to_ball)
       p.spare.z -= 50 * 3
       p.spare.y += 10
@@ -1277,6 +1277,7 @@ declare var ball_update: (b: Ball) => void
         }
         // reverse z-component of velocity
         b.vel.z = -b.vel.z
+        vec3_scale(b.vel, 0.1)
       } else {
         vec3_assign(spare, b.vel)
         vec3_scale(spare, 1 / 60)
@@ -1314,11 +1315,11 @@ function ball_draw(b: Ball): void {
   )
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.yellow)
   //print(b.is_kinematic)
-  vec3_print(b.pos)
-  vec3_print(b.vel)
-  vec3_print(b.acc)
-  print('intersects:')
-  print(b.intersects)
+  //vec3_print(b.pos)
+  //vec3_print(b.vel)
+  //vec3_print(b.acc)
+  //print('intersects:')
+  //print(b.intersects)
 }
 
 /**
@@ -1372,7 +1373,7 @@ function net_collides_with(
 
   // z = m2*y + z0, set z to 0 and solve for y
   const m2 = (next_pos.z - prev_pos.z) / (next_pos.y - prev_pos.y)
-  printh('m2:' + m2, 'test.log')
+  //printh('m2:' + m2, 'test.log')
   const y = -z0 / m2
   const y_at_net = prev_pos.y + y
   const y_in_range = n.net_bottom <= y_at_net && y_at_net < n.net_top
@@ -1380,8 +1381,8 @@ function net_collides_with(
     return [false, null]
   }
 
-  printh('collides', 'test.log')
-  vec3_printh(prev_pos)
-  vec3_printh(next_pos)
+  //printh('collides', 'test.log')
+  //vec3_printh(prev_pos)
+  //vec3_printh(next_pos)
   return [true, vec3(x_at_net, y_at_net, 0)]
 }
