@@ -1,6 +1,7 @@
 ///<reference path="../@types/pico8.d.ts">
 
 const meter_unit: number = 6
+const second: number = 60 // 60 frames in a second, since we are using _update60
 
 enum col {
   black,
@@ -850,7 +851,8 @@ function game(): game {
     5 * meter_unit,
     player_keyboard_input,
     vec3(-2.59 * meter_unit, 0, 0.5 * meter_unit),
-    vec3(2.59 * meter_unit, 0, 6.7 * meter_unit)
+    vec3(2.59 * meter_unit, 0, 6.7 * meter_unit),
+    -1
   )
 
   const game_instance = {
@@ -867,7 +869,8 @@ function game(): game {
       -5 * meter_unit,
       player_ai,
       vec3(-2.59 * meter_unit, 0, -6.7 * meter_unit),
-      vec3(2.59 * meter_unit, 0, -0.5 * meter_unit)
+      vec3(2.59 * meter_unit, 0, -0.5 * meter_unit),
+      1
     ),
     ball: b,
     zero_vec: vec3(),
@@ -1015,6 +1018,7 @@ interface Player {
   input_method: (p: Player) => void
   upper_left_bound: vec3
   lower_right_bound: vec3
+  player_dir: -1 | 1
 }
 
 function player(
@@ -1025,7 +1029,8 @@ function player(
   z: number,
   input_method: (p: Player) => void,
   upper_left_bound: vec3,
-  lower_right_bound: vec3
+  lower_right_bound: vec3,
+  player_dir: -1 | 1
 ): Player {
   const meter = 6
 
@@ -1047,6 +1052,7 @@ function player(
     input_method: input_method,
     upper_left_bound: upper_left_bound,
     lower_right_bound: lower_right_bound,
+    player_dir: player_dir,
   }
 }
 
@@ -1064,6 +1070,74 @@ function player_ai(p: Player): void {
   p.acc.y = 0
 
   // if ball is in range, swing
+}
+
+function player_swing(p: Player): void {
+  /**
+   * Compute `player_to_ball` vector.
+   *
+   * Note: player's chest is 1m above the ground.
+   */
+
+  vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+  p.player_to_ball.y += 1 * meter_unit
+
+  /**
+   * Compute swing pre-condition.
+   *
+   * Condition: ball is in-range.
+   * Condition: ball is still in air.
+   * Condition: not currently swinging.
+   * Condition: pressed the swing button.
+   */
+
+  if (
+    !(
+      vec3_magnitude(p.player_to_ball) < 2.5 * meter_unit &&
+      p.ball.pos.y > 0 &&
+      p.swing_time < 0.1 &&
+      btn(button.z)
+    )
+  ) {
+    return
+  }
+
+  /**
+   * Enter a swing state.
+   */
+
+  p.swing_time = 1 * second
+
+  /**
+   * Right-side lob.
+   *
+   * Condition: ball is below 1m.
+   * Condition: ball is on right side.
+   * Condition: ball is in front of player.
+   */
+
+  if (
+    p.ball.pos.y < 1 * meter_unit &&
+    p.player_to_ball.x > 0 &&
+    p.player_to_ball.z <= 1
+  ) {
+    // Slap `up` vector into `player_to_ball` vector.
+    vec3_cross(p.spare, p.up, p.player_to_ball)
+
+    // Add some forward velocity.
+    p.spare.z += 6 * meter_unit
+
+    // Add some upward velocity.
+    // The lower the ball, the greater the upward velocity.
+    p.spare.y += 50 + (1 * meter_unit - p.ball.pos.y) * 5
+
+    // Add velocity to ball velocity.
+    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  }
+
+  // TODO: Left-side lob.
+  // TODO: Left overhead.
+  // TODO: Right overhead.
 }
 
 function player_update(p: Player): void {
