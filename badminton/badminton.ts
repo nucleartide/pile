@@ -69,7 +69,7 @@ _update60 = function(): void {
 }
 
 _draw = function(): void {
-  cls(col.blue)
+  cls(col.dark_purple)
 
   if (
     current_game_state === game_state.playing ||
@@ -809,7 +809,7 @@ function game(): game {
   c.x_angle = -0.08
   c.pos.y = -0.5 * s
 
-  const p = polygon(col.peach, c, [
+  const p = polygon(col.dark_green, c, [
     vec3(-3.8 * s, 0, -7.7 * s),
     vec3(-3.8 * s, 0, 7.7 * s),
     vec3(3.8 * s, 0, 7.7 * s),
@@ -848,7 +848,9 @@ function game(): game {
     -0.5 * meter_unit,
     0,
     5 * meter_unit,
-    player_keyboard_input
+    player_keyboard_input,
+    vec3(-2.59 * meter_unit, 0, 0.5 * meter_unit),
+    vec3(2.59 * meter_unit, 0, 6.7 * meter_unit)
   )
 
   const game_instance = {
@@ -857,7 +859,16 @@ function game(): game {
     cam: c,
     court: p,
     player: player_user,
-    opponent: player(c, b, -0.5 * meter_unit, 0, -5 * meter_unit, player_ai),
+    opponent: player(
+      c,
+      b,
+      -0.5 * meter_unit,
+      0,
+      -5 * meter_unit,
+      player_ai,
+      vec3(-2.59 * meter_unit, 0, -6.7 * meter_unit),
+      vec3(2.59 * meter_unit, 0, -0.5 * meter_unit)
+    ),
     ball: b,
     zero_vec: vec3(),
     post_rally_timer: 0,
@@ -1002,6 +1013,8 @@ interface Player {
   player_to_ball: vec3
   swing_time: number
   input_method: (p: Player) => void
+  upper_left_bound: vec3
+  lower_right_bound: vec3
 }
 
 function player(
@@ -1010,7 +1023,9 @@ function player(
   x: number,
   y: number,
   z: number,
-  input_method: (p: Player) => void
+  input_method: (p: Player) => void,
+  upper_left_bound: vec3,
+  lower_right_bound: vec3
 ): Player {
   const meter = 6
 
@@ -1030,6 +1045,8 @@ function player(
     player_to_ball: vec3(),
     swing_time: 0,
     input_method: input_method,
+    upper_left_bound: upper_left_bound,
+    lower_right_bound: lower_right_bound,
   }
 }
 
@@ -1040,7 +1057,14 @@ function player_keyboard_input(p: Player): void {
   if (btn(button.down)) p.acc.z += p.desired_speed
 }
 
-function player_ai(p: Player): void {}
+function player_ai(p: Player): void {
+  // move in direction of ball
+  vec3_zero(p.acc)
+  vec3_sub(p.acc, p.ball.pos, p.pos)
+  p.acc.y = 0
+
+  // if ball is in range, swing
+}
 
 function player_update(p: Player): void {
   // temporary hit variable
@@ -1076,6 +1100,16 @@ function player_update(p: Player): void {
   vec3_assign(p.vel60, p.vel)
   vec3_scale(p.vel60, 1 / 60)
   vec3_add(p.pos, p.pos, p.vel60)
+
+  /**
+   * Bounds checking.
+   */
+
+  if (p.pos.x < p.upper_left_bound.x) p.pos.x = p.upper_left_bound.x
+  if (p.pos.x > p.lower_right_bound.x) p.pos.x = p.lower_right_bound.x
+
+  if (p.pos.z < p.upper_left_bound.z) p.pos.z = p.upper_left_bound.z
+  if (p.pos.z > p.lower_right_bound.z) p.pos.z = p.lower_right_bound.z
 
   /**
    * Update screen position.
@@ -1341,13 +1375,17 @@ declare var ball_update: (b: Ball) => void
 }
 
 function ball_draw(b: Ball): void {
+  // draw ball shadow
   circfill(
     round(b.screen_shadow_pos.x),
     round(b.screen_shadow_pos.y),
     1,
     col.dark_blue
   )
-  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.yellow)
+
+  // draw ball
+  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.yellow)
+
   //print(b.is_kinematic)
   //vec3_print(b.pos)
   //vec3_print(b.vel)
