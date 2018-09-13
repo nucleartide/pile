@@ -1125,7 +1125,7 @@ function player_swing(p: Player): void {
     vec3_cross(p.spare, p.up, p.player_to_ball)
 
     // Add some forward velocity.
-    p.spare.z += 6 * meter_unit
+    p.spare.z += 6 * meter_unit * p.player_dir
 
     // Add some upward velocity.
     // The lower the ball, the greater the upward velocity.
@@ -1236,6 +1236,9 @@ function player_update(p: Player): void {
    * Swing at ball.
    */
 
+  player_swing(p)
+
+  /*
   const meter = 6
 
   // player's chest is ~1m above the ground
@@ -1318,6 +1321,7 @@ function player_update(p: Player): void {
       vec3_add(p.ball.vel, p.ball.vel, p.spare)
     }
   }
+  */
 }
 
 function player_draw(p: Player): void {
