@@ -2,6 +2,7 @@
 
 const meter_unit: number = 6
 const second: number = 60 // 60 frames in a second, since we are using _update60
+const win_score = 1
 
 enum col {
   black,
@@ -44,6 +45,8 @@ enum game_state {
   serve,
   playing,
   post_rally,
+  player_win,
+  opponent_win,
 }
 
 let current_game_state: game_state
@@ -78,6 +81,14 @@ _draw = function(): void {
     current_game_state === game_state.post_rally
   ) {
     game_draw(g)
+  }
+
+  if (current_game_state === game_state.player_win) {
+    win_draw()
+  }
+
+  if (current_game_state === game_state.opponent_win) {
+    lose_draw()
   }
 }
 
@@ -852,7 +863,32 @@ function game(): game {
     player_keyboard_input,
     vec3(-2.59 * meter_unit, 0, 0.5 * meter_unit),
     vec3(2.59 * meter_unit, 0, 6.7 * meter_unit),
-    -1
+    -1,
+    function(p: Player): boolean {
+      /**
+       * Compute `player_to_ball` vector.
+       *
+       * Note: player's chest is 1m above the ground.
+       */
+
+      vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+      p.player_to_ball.y += 1 * meter_unit
+
+      /**
+       * Compute swing pre-condition.
+       *
+       * Condition: ball is in-range.
+       * Condition: ball is still in air.
+       * Condition: not currently swinging.
+       */
+
+      return (
+        vec3_magnitude(p.player_to_ball) < 2.5 * meter_unit &&
+        p.ball.pos.y > 0 &&
+        p.swing_time < 0.1 &&
+        btn(button.z)
+      )
+    }
   )
 
   const game_instance = {
@@ -870,7 +906,31 @@ function game(): game {
       player_ai,
       vec3(-2.59 * meter_unit, 0, -6.7 * meter_unit),
       vec3(2.59 * meter_unit, 0, -0.5 * meter_unit),
-      1
+      1,
+      function(p: Player): boolean {
+        /**
+         * Compute `player_to_ball` vector.
+         *
+         * Note: player's chest is 1m above the ground.
+         */
+
+        vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+        p.player_to_ball.y += 1 * meter_unit
+
+        /**
+         * Compute swing pre-condition.
+         *
+         * Condition: ball is in-range.
+         * Condition: ball is still in air.
+         * Condition: not currently swinging.
+         */
+
+        return (
+          vec3_magnitude(p.player_to_ball) < 2.5 * meter_unit &&
+          p.ball.pos.y > 0 &&
+          p.swing_time < 0.1
+        )
+      }
     ),
     ball: b,
     zero_vec: vec3(),
@@ -886,6 +946,16 @@ function game(): game {
 }
 
 function game_update(g: game): void {
+  if (g.player_score === win_score) {
+    next_game_state = game_state.player_win
+    return
+  }
+
+  if (g.opponent_score === win_score) {
+    next_game_state = game_state.opponent_win
+    return
+  }
+
   polygon_update(g.court)
   player_update(g.player)
   player_update(g.opponent)
@@ -1019,6 +1089,7 @@ interface Player {
   upper_left_bound: vec3
   lower_right_bound: vec3
   player_dir: -1 | 1
+  swing_condition: (p: Player) => boolean
 }
 
 function player(
@@ -1030,7 +1101,8 @@ function player(
   input_method: (p: Player) => void,
   upper_left_bound: vec3,
   lower_right_bound: vec3,
-  player_dir: -1 | 1
+  player_dir: -1 | 1,
+  swing_condition: (p: Player) => boolean
 ): Player {
   const meter = 6
 
@@ -1053,6 +1125,7 @@ function player(
     upper_left_bound: upper_left_bound,
     lower_right_bound: lower_right_bound,
     player_dir: player_dir,
+    swing_condition: swing_condition,
   }
 }
 
@@ -1064,44 +1137,33 @@ function player_keyboard_input(p: Player): void {
 }
 
 function player_ai(p: Player): void {
-  // move in direction of ball
+  /**
+   * Move in direction of ball.
+   */
+
   vec3_zero(p.acc)
   vec3_sub(p.acc, p.ball.pos, p.pos)
   p.acc.y = 0
 
-  // if ball is in range, swing
-}
-
-function player_swing(p: Player): void {
   /**
    * Compute `player_to_ball` vector.
-   *
-   * Note: player's chest is 1m above the ground.
    */
 
   vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
   p.player_to_ball.y += 1 * meter_unit
 
   /**
-   * Compute swing pre-condition.
-   *
-   * Condition: ball is in-range.
-   * Condition: ball is still in air.
-   * Condition: not currently swinging.
-   * Condition: pressed the swing button.
+   * If ball is in range, swing.
    */
 
-  if (
-    !(
-      vec3_magnitude(p.player_to_ball) < 2.5 * meter_unit &&
-      p.ball.pos.y > 0 &&
-      p.swing_time < 0.1 &&
-      btn(button.z)
-    )
-  ) {
-    return
+  const in_range = vec3_magnitude(p.player_to_ball) < 2.5 * meter_unit
+  if (in_range) {
+    printh('opponent swing', 'test.log')
+    player_swing(p)
   }
+}
 
+function player_swing(p: Player): void {
   /**
    * Enter a swing state.
    */
@@ -1132,6 +1194,51 @@ function player_swing(p: Player): void {
     p.spare.y += 50 + (1 * meter_unit - p.ball.pos.y) * 5
 
     // Add velocity to ball velocity.
+    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  }
+
+  // TODO: handle left side lob
+  if (
+    p.ball.pos.y < 1 * meter_unit &&
+    p.player_to_ball.x < 0 * meter_unit &&
+    p.player_to_ball.z <= 1
+  ) {
+    //printh('left side lob', 'test.log')
+    // execute right side lob:
+    // slap up vector into player_to_ball vector
+    vec3_cross(p.spare, p.player_to_ball, p.up)
+    // depending on ball's dist from 1m, add to vertical velocity
+    p.spare.z += 6 * meter_unit * p.player_dir
+    p.spare.y += (1 * meter_unit - p.ball.pos.y) * 5 + 50
+    // add velocity to ball velocity
+    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+    //vec3_printh(p.spare)
+  }
+
+  // TODO: handle left overhead hit
+  if (
+    p.ball.pos.y >= 1 * meter_unit &&
+    p.player_to_ball.z <= 1 &&
+    p.player_to_ball.x < 0 * meter_unit
+  ) {
+    //printh('left overhead hit', 'test.log')
+    vec3_cross(p.spare, p.player_to_ball, p.up)
+    p.spare.z += 50 * 3 * p.player_dir
+    p.spare.y += 10
+    //p.spare.y -= 10
+    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  }
+
+  // TODO: handle right overhead hit
+  if (
+    p.ball.pos.y >= 1 * meter_unit &&
+    p.player_to_ball.z <= 1 &&
+    p.player_to_ball.x > 0 * meter_unit
+  ) {
+    //printh('right overhead hit', 'test.log')
+    vec3_cross(p.spare, p.up, p.player_to_ball)
+    p.spare.z += 50 * 3 * p.player_dir
+    p.spare.y += 10
     vec3_add(p.ball.vel, p.ball.vel, p.spare)
   }
 
@@ -1233,10 +1340,12 @@ function player_update(p: Player): void {
   p.swing_time = max(p.swing_time - 1, 0)
 
   /**
-   * Swing at ball.
+   * Swing at ball if condition is met.
    */
 
-  player_swing(p)
+  if (p.swing_condition(p)) {
+    player_swing(p)
+  }
 
   /*
   const meter = 6
@@ -1535,4 +1644,14 @@ function net_collides_with(
   //vec3_printh(prev_pos)
   //vec3_printh(next_pos)
   return [true, vec3(x_at_net, y_at_net, 0)]
+}
+
+function win_draw(): void {
+  cls()
+  print('win')
+}
+
+function lose_draw(): void {
+  cls()
+  print('lose')
 }
