@@ -818,7 +818,7 @@ function game(): game {
   const c = cam()
   c.dist = 12 * s
   c.fov = 34 * s
-  c.x_angle = -0.08
+  c.x_angle = -0.05
   c.pos.y = -0.5 * s
 
   const p = polygon(col.dark_green, c, [
