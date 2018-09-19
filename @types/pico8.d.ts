@@ -10,10 +10,12 @@ declare function printh<T>(str: T, filename?: string, overwrite?: boolean): void
  * Program structure.
  */
 
+/*
 declare var _init: () => void
 declare var _update: () => void
 declare var _update60: () => void
 declare var _draw: () => void
+*/
 
 /**
  * Graphics.
