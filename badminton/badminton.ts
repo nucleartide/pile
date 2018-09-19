@@ -63,9 +63,9 @@ enum button {
  * Actor.
  */
 
-interface Actor<T> {
-  update: (t: T) => void
-  draw: (t: T) => void
+interface Actor {
+  update: (o: any) => void
+  draw: (o: any) => void
 }
 
 /**
@@ -82,19 +82,52 @@ enum state {
 }
 
 /**
- * Badminton actor.
- */
-
-type BadmintonActor = Game
-
-/**
  * Game loop.
  */
 
-let actors: Array<BadmintonActor>
+let actors: Array<Actor>
 
 function _init(): void {
-  actors = [game()]
+  /**
+   * Read map data.
+   */
+
+  const court_lines = read_lines()
+  const net_lines = read_lines()
+
+  /**
+   * Construct camera.
+   */
+
+  const c = cam()
+  c.dist = 12 * meter
+  c.fov = 34 * meter
+  c.x_angle = -0.05
+  c.pos.y = -0.5 * meter
+
+  /**
+   * Construct net.
+   */
+
+  const n = net(net_lines, c)
+
+  /**
+   * Construct court.
+   */
+
+  const crt = court(court_lines, c)
+
+  /**
+   * Construct ball.
+   */
+
+  const b = ball(c, n)
+
+  /**
+   * Initialize actors.
+   */
+
+  actors = [c, n, crt, b]
 
   /*
   current_game_state = state.player_one_serve
@@ -104,7 +137,9 @@ function _init(): void {
 
 function _update60(): void {
   for (let i = 0; i < actors.length; i++) {
-    actors[i].update(actors[i])
+    const a = actors[i]
+    const update = actors[i].update
+    if (update) update(actors[i])
   }
 
   /*
@@ -122,8 +157,10 @@ function _update60(): void {
 
 function _draw(): void {
   cls(col.dark_purple)
+
   for (let i = 0; i < actors.length; i++) {
-    actors[i].draw(actors[i])
+    const draw = actors[i].draw
+    if (draw) draw(actors[i])
   }
 
   /*
@@ -576,7 +613,7 @@ function read_lines(): Array<line> {
   return lines
 }
 
-function line_draw(l: line, c: cam): void {
+function line_draw(l: line, c: Camera): void {
   cam_project(c, l.start_screen, l.start_vec)
   cam_project(c, l.end_screen, l.end_vec)
   line(
@@ -596,10 +633,10 @@ interface polygon {
   points_world: Array<Vec3>
   points_screen: Array<Vec3>
   col: col
-  cam: cam
+  cam: Camera
 }
 
-function polygon(col: col, cam: cam, points: Array<Vec3>): polygon {
+function polygon(col: col, cam: Camera, points: Array<Vec3>): polygon {
   const points_screen: Array<Vec3> = []
   for (let i = 0; i < points.length; i++) {
     add(points_screen, vec3())
@@ -708,7 +745,7 @@ function polygon_draw(p: polygon): void {
  * Camera.
  */
 
-interface cam {
+interface Camera extends Actor {
   pos: Vec3
   x_angle: number
   mx: Mat3
@@ -718,7 +755,7 @@ interface cam {
   fov: number
 }
 
-function cam(): cam {
+function cam(): Camera {
   return {
     pos: vec3(),
     x_angle: 0,
@@ -727,10 +764,16 @@ function cam(): cam {
     my: mat3(),
     dist: 7 * 10,
     fov: 150,
+    update: cam_update,
+    draw: cam_draw,
   }
 }
 
-function cam_project(c: cam, out: Vec3, v: Vec3): void {
+function cam_update(c: Camera): void {}
+
+function cam_draw(c: Camera): void {}
+
+function cam_project(c: Camera, out: Vec3, v: Vec3): void {
   // world to view.
   vec3_sub(out, v, c.pos)
 
@@ -760,10 +803,10 @@ function cam_project(c: cam, out: Vec3, v: Vec3): void {
  * Game.
  */
 
-interface Game extends Actor<Game> {
+interface Game extends Actor {
   court_lines: Array<line>
   net_lines: Array<line>
-  cam: cam
+  cam: Camera
   court: polygon
   player: Player
   opponent: Player
@@ -776,26 +819,6 @@ interface Game extends Actor<Game> {
 }
 
 function game(): Game {
-  const court_lines = read_lines()
-  const net_lines = read_lines()
-
-  const s = 6
-  const c = cam()
-  c.dist = 12 * s
-  c.fov = 34 * s
-  c.x_angle = -0.05
-  c.pos.y = -0.5 * s
-
-  const p = polygon(col.dark_green, c, [
-    vec3(-3.8 * s, 0, -7.7 * s),
-    vec3(-3.8 * s, 0, 7.7 * s),
-    vec3(3.8 * s, 0, 7.7 * s),
-    vec3(3.8 * s, 0, -7.7 * s),
-  ])
-
-  const n = net(net_lines)
-  const b = ball(c, n)
-
   /*
   var [collides, intersection] = net_collides_with(
     n,
@@ -923,7 +946,6 @@ function game_update(g: Game): void {
     return
   }
 
-  polygon_update(g.court)
   player_update(g.player)
   player_update(g.opponent)
   ball_update(g.ball)
@@ -972,13 +994,6 @@ function game_update(g: Game): void {
 type DrawFunction = (g: Game) => void
 let order: Array<[Vec3, DrawFunction]> = []
 function game_draw(g: Game): void {
-  polygon_draw(g.court)
-
-  for (let i = 0; i < g.court_lines.length; i++) {
-    const l = g.court_lines[i]
-    line_draw(l, g.cam)
-  }
-
   clear_order()
   insert_into_order(g.zero_vec, game_draw_net)
   insert_into_order(g.player.pos, game_draw_player)
@@ -1045,7 +1060,7 @@ interface Player {
   acc: Vec3
   desired_speed: number
   screen_pos: Vec3
-  cam: cam
+  cam: Camera
   ball: Ball
   spare: Vec3
   up: Vec3
@@ -1060,7 +1075,7 @@ interface Player {
 }
 
 function player(
-  c: cam,
+  c: Camera,
   b: Ball,
   x: number,
   y: number,
@@ -1338,7 +1353,7 @@ function player_draw(p: Player): void {
  * Ball.
  */
 
-interface Ball {
+interface Ball extends Actor {
   pos: Vec3
   shadow_pos: Vec3
   vel: Vec3
@@ -1347,13 +1362,13 @@ interface Ball {
   acc60: Vec3
   screen_pos: Vec3
   screen_shadow_pos: Vec3
-  cam: cam
+  cam: Camera
   is_kinematic: boolean
   net: Net
   intersects: boolean
 }
 
-function ball(c: cam, n: Net): Ball {
+function ball(c: Camera, n: Net): Ball {
   const meter = 6
 
   return {
@@ -1369,6 +1384,8 @@ function ball(c: cam, n: Net): Ball {
     is_kinematic: false,
     net: n,
     intersects: false,
+    update: ball_update,
+    draw: ball_draw,
   }
 }
 
@@ -1467,21 +1484,34 @@ function ball_draw(b: Ball): void {
  * Net.
  */
 
-interface Net {
+interface Net extends Actor {
   lines: Array<line>
   net_top: number
   net_bottom: number
   left_pole: number
   right_pole: number
+  cam: Camera
 }
 
-function net(lines: Array<line>): Net {
+function net(lines: Array<line>, cam: Camera): Net {
   return {
     lines: lines,
     net_top: 1.5 * meter,
     net_bottom: 0.9 * meter,
     left_pole: -2.95 * meter,
     right_pole: 2.95 * meter,
+    cam: cam,
+    update: net_update,
+    draw: net_draw,
+  }
+}
+
+function net_update(n: Net): void {}
+
+function net_draw(n: Net): void {
+  for (let i = 0; i < n.lines.length; i++) {
+    const l = n.lines[i]
+    line_draw(l, n.cam)
   }
 }
 
@@ -1544,4 +1574,44 @@ function win_draw(): void {
 function lose_draw(): void {
   cls()
   print('lose')
+}
+
+/**
+ * Court.
+ */
+
+interface Court extends Actor {
+  cam: Camera
+  court_lines: Array<line>
+  poly: polygon
+}
+
+function court(court_lines: Array<line>, cam: Camera): Court {
+  const p = polygon(col.dark_green, cam, [
+    vec3(-3.8 * meter, 0, -7.7 * meter),
+    vec3(-3.8 * meter, 0, 7.7 * meter),
+    vec3(3.8 * meter, 0, 7.7 * meter),
+    vec3(3.8 * meter, 0, -7.7 * meter),
+  ])
+
+  return {
+    court_lines: court_lines,
+    cam: cam,
+    update: court_update,
+    draw: court_draw,
+    poly: p,
+  }
+}
+
+function court_update(c: Court): void {
+  polygon_update(c.poly)
+}
+
+function court_draw(c: Court): void {
+  polygon_draw(c.poly)
+
+  for (let i = 0; i < c.court_lines.length; i++) {
+    const l = c.court_lines[i]
+    line_draw(l, c.cam)
+  }
 }
