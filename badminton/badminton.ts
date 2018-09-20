@@ -76,12 +76,9 @@ interface Actor {
  */
 
 enum state {
-  player_one_serve,
-  player_two_serve,
+  serve,
   rally,
   post_rally,
-  player_one_win,
-  player_two_win,
 }
 
 /**
@@ -176,7 +173,8 @@ function _init(): void {
         btn(button.z)
       )
     },
-    g
+    g,
+    true
   )
 
   /**
@@ -217,7 +215,8 @@ function _init(): void {
         p.swing_time < 0.1
       )
     },
-    g
+    g,
+    false
   )
 
   /**
@@ -908,6 +907,7 @@ interface Game extends Actor {
   opponent_score: number
   state: state
   next_state: state
+  server?: Player
 }
 
 function game(c: Court, b: Ball): Game {
@@ -919,8 +919,8 @@ function game(c: Court, b: Ball): Game {
     post_rally_timer: 0,
     player_score: 0,
     opponent_score: 0,
-    state: state.player_one_serve,
-    next_state: state.player_one_serve,
+    state: state.serve,
+    next_state: state.serve,
   }
 }
 
@@ -1016,20 +1016,26 @@ function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
  */
 
 interface Player extends Actor {
+  // Dependencies.
   cam: Camera
-  ball: Ball
+  ball: Ball // Deprecated.
   game: Game
 
-  scale: number
+  // Position.
   pos: Vec3
+  screen_pos: Vec3
+
+  // Velocity.
   vel: Vec3
   vel60: Vec3
+
+  // Acceleration.
   acc: Vec3
   desired_speed: number
-  screen_pos: Vec3
+
+  // TODO.
   spare: Vec3
   up: Vec3
-  hit: boolean
   player_to_ball: Vec3
   swing_time: number
   input_method: (p: Player) => void
@@ -1050,10 +1056,10 @@ function player(
   lower_right_bound: Vec3,
   player_dir: -1 | 1,
   swing_condition: (p: Player) => boolean,
-  game: Game
+  game: Game,
+  is_initial_server: boolean
 ): Player {
-  return {
-    scale: meter,
+  const p = {
     pos: vec3(x, y, z),
     vel: vec3(),
     vel60: vec3(),
@@ -1064,7 +1070,6 @@ function player(
     ball: b,
     spare: vec3(),
     up: vec3(0, 1, 0),
-    hit: false,
     player_to_ball: vec3(),
     swing_time: 0,
     input_method: input_method,
@@ -1076,6 +1081,12 @@ function player(
     update: player_update,
     draw: player_draw,
   }
+
+  if (is_initial_server) {
+    game.server = p
+  }
+
+  return p
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1242,15 +1253,43 @@ function player_move(p: Player): void {
 }
 
 function player_update(p: Player): void {
-  // player serve && player is serving
-  // player serve && opponent is serving
+  /**
+   * Player is serving.
+   */
 
-  // player serve && server is current player
-  // player serve && server is not current player
-  // player rally
-  // player post-rally
+  if (p.game.state === state.serve && p.game.server === p) {
+    // Move player within serve bounds.
 
-  player_move(p)
+    // TODO.
+    // player_move(p)
+    return
+  }
+
+  /**
+   * Someone else is serving.
+   */
+
+  if (p.game.state === state.serve && p.game.server !== p) {
+    return
+  }
+
+  /**
+   * Rally.
+   */
+
+  if (p.game.state === state.rally) {
+    return
+  }
+
+  /**
+   * Post-rally.
+   */
+
+  if (p.game.state === state.post_rally) {
+    return
+  }
+
+  return
 
   /**
    * TODO: handle ball serve
