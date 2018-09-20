@@ -14,6 +14,9 @@ const second: number = 60
 // TODO: Remove upon fleshing out scoring.
 const win_score = 1
 
+// Zero vector. Use it for z-sorting!
+const zero_vec = { x: 0, y: 0, z: 0 }
+
 /**
  * Color.
  */
@@ -83,9 +86,14 @@ enum state {
 
 /**
  * Game loop.
+ *
+ * States:
+ * - Menu (todo)
+ * - Game
  */
 
 let actors: Array<Actor>
+let actors_obj: { [key: string]: Actor }
 
 function _init(): void {
   /**
@@ -217,57 +225,49 @@ function _init(): void {
    */
 
   actors = [c, n, crt, b, g, player_user, opponent]
+  actors_obj = {
+    camera: c,
+    net: n,
+    court: crt,
+    ball: b,
+    game: g,
+    player: player_user,
+    opponent: opponent,
+  }
 }
 
 function _update60(): void {
   for (let i = 0; i < actors.length; i++) {
     const a = actors[i]
-    const update = actors[i].update
-    if (update) update(actors[i])
+    a.update(a)
   }
-
-  /*
-  current_game_state = next_game_state
-
-  if (
-    current_game_state === state.playing ||
-    current_game_state === state.serve ||
-    current_game_state === state.post_rally
-  ) {
-    game_update(g)
-  }
-  */
 }
 
 function _draw(): void {
   cls(col.dark_purple)
 
   /**
-   * TODO: Z-sorting.
+   * Do z-sorting.
    */
 
-  for (let i = 0; i < actors.length; i++) {
-    const draw = actors[i].draw
-    if (draw) draw(actors[i])
-  }
+  const order: OrderArray = []
+  insert_into(order, zero_vec, actors_obj.net)
+  insert_into(order, (actors_obj.player as Player).pos, actors_obj.player)
+  insert_into(order, (actors_obj.opponent as Player).pos, actors_obj.opponent)
+  insert_into(order, (actors_obj.ball as Ball).pos, actors_obj.ball)
 
-  /*
-  if (
-    current_game_state === state.playing ||
-    current_game_state === state.serve ||
-    current_game_state === state.post_rally
-  ) {
-    game_draw(g)
-  }
+  /**
+   * Draw.
+   */
 
-  if (current_game_state === state.player_win) {
-    win_draw()
-  }
+  // Draw court first.
+  const court = actors_obj.court
+  court.draw(court)
 
-  if (current_game_state === state.opponent_win) {
-    lose_draw()
+  for (let i = 0; i < order.length; i++) {
+    const a = order[i][1]
+    a.draw(a)
   }
-  */
 }
 
 /*
@@ -1020,16 +1020,6 @@ function game_update(g: Game): void {
 }
 
 function game_draw(g: Game): void {
-  /*
-  insert_into_order(g.zero_vec, game_draw_net)
-  insert_into_order(g.player.pos, game_draw_player)
-  insert_into_order(g.opponent.pos, game_draw_opponent)
-  insert_into_order(g.ball.pos, game_draw_ball)
-  for (let i = 0; i < order.length; i++) {
-    order[i][1](g)
-  }
-  */
-
   /**
    * Draw score.
    */
@@ -1038,32 +1028,13 @@ function game_draw(g: Game): void {
   print(str, 64 - str.length * 2, 3, col.white)
 }
 
-/*
-function game_draw_net(g: Game): void {
-  for (let i = 0; i < g.net_lines.length; i++) {
-    const l = g.net_lines[i]
-    line_draw(l, g.cam)
-  }
-}
-function game_draw_player(g: Game): void {
-  player_draw(g.player)
-}
-function game_draw_opponent(g: Game): void {
-  player_draw(g.opponent)
-}
-function game_draw_ball(g: Game): void {
-  ball_draw(g.ball)
-}
-*/
-
 /**
  * Z-sorting.
  */
 
-type DrawFunction = (o: {}) => void
+type OrderArray = Array<[Vec3, Actor]>
 
-/*
-function insert_into_order(pos: Vec3, draw_fn: (o: {}) => void): void {
+function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
   for (let i = 0; i < order.length; i++) {
     const current = order[i]
     if (pos.z < current[0].z) {
@@ -1073,14 +1044,13 @@ function insert_into_order(pos: Vec3, draw_fn: (o: {}) => void): void {
       }
 
       // Insert.
-      order[i] = [pos, draw_fn]
+      order[i] = [pos, a]
       return
     }
   }
 
-  add(order, [pos, draw_fn])
+  add(order, [pos, a])
 }
-*/
 
 /**
  * Player.
