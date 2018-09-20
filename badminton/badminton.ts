@@ -124,15 +124,99 @@ function _init(): void {
   const b = ball(c, n)
 
   /**
+   * Construct game.
+   */
+
+  const g = game(crt, b)
+
+  /**
+   * Construct player.
+   */
+
+  const player_user = player(
+    c,
+    b,
+    -0.5 * meter,
+    0,
+    5 * meter,
+    player_keyboard_input,
+    vec3(-2.59 * meter, 0, 0.5 * meter),
+    vec3(2.59 * meter, 0, 6.7 * meter),
+    -1,
+    function(p: Player): boolean {
+      /**
+       * Compute `player_to_ball` vector.
+       *
+       * Note: player's chest is 1m above the ground.
+       */
+
+      vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+      p.player_to_ball.y += 1 * meter
+
+      /**
+       * Compute swing pre-condition.
+       *
+       * Condition: ball is in-range.
+       * Condition: ball is still in air.
+       * Condition: not currently swinging.
+       */
+
+      return (
+        vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
+        p.ball.pos.y > 0 &&
+        p.swing_time < 0.1 &&
+        btn(button.z)
+      )
+    },
+    g
+  )
+
+  /**
+   * Construct opponent.
+   */
+
+  const opponent = player(
+    c,
+    b,
+    -0.5 * meter,
+    0,
+    -5 * meter,
+    player_ai,
+    vec3(-2.59 * meter, 0, -6.7 * meter),
+    vec3(2.59 * meter, 0, -0.5 * meter),
+    1,
+    function(p: Player): boolean {
+      /**
+       * Compute `player_to_ball` vector.
+       *
+       * Note: player's chest is 1m above the ground.
+       */
+
+      vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
+      p.player_to_ball.y += 1 * meter
+
+      /**
+       * Compute swing pre-condition.
+       *
+       * Condition: ball is in-range.
+       * Condition: ball is still in air.
+       * Condition: not currently swinging.
+       */
+
+      return (
+        vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
+        p.ball.pos.y > 0 &&
+        p.swing_time < 0.1
+      )
+    },
+    g
+  )
+
+  /**
    * Initialize actors.
    */
 
-  actors = [c, n, crt, b]
-
-  /*
-  current_game_state = state.player_one_serve
-  next_game_state = state.player_one_serve
-  */
+  actors = [c, n, crt, b, g, player_user, opponent]
 }
 
 function _update60(): void {
@@ -157,6 +241,10 @@ function _update60(): void {
 
 function _draw(): void {
   cls(col.dark_purple)
+
+  /**
+   * TODO: Z-sorting.
+   */
 
   for (let i = 0; i < actors.length; i++) {
     const draw = actors[i].draw
@@ -804,21 +892,28 @@ function cam_project(c: Camera, out: Vec3, v: Vec3): void {
  */
 
 interface Game extends Actor {
-  court_lines: Array<line>
-  net_lines: Array<line>
-  cam: Camera
-  court: polygon
-  player: Player
-  opponent: Player
+  court: Court
   ball: Ball
-  zero_vec: Vec3
   post_rally_timer: number
   player_score: number
   opponent_score: number
-  net: Net
+  state: state
+  next_state: state
 }
 
-function game(): Game {
+function game(c: Court, b: Ball): Game {
+  return {
+    update: game_update,
+    draw: game_draw,
+    court: c,
+    ball: b,
+    post_rally_timer: 0,
+    player_score: 0,
+    opponent_score: 0,
+    state: state.player_one_serve,
+    next_state: state.player_one_serve,
+  }
+
   /*
   var [collides, intersection] = net_collides_with(
     n,
@@ -842,84 +937,17 @@ function game(): Game {
   stop()
   */
 
-  const player_user = player(
-    c,
-    b,
-    -0.5 * meter,
-    0,
-    5 * meter,
-    player_keyboard_input,
-    vec3(-2.59 * meter, 0, 0.5 * meter),
-    vec3(2.59 * meter, 0, 6.7 * meter),
-    -1,
-    function(p: Player): boolean {
-      /**
-       * Compute `player_to_ball` vector.
-       *
-       * Note: player's chest is 1m above the ground.
-       */
+  /*
 
-      vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
-      p.player_to_ball.y += 1 * meter
-
-      /**
-       * Compute swing pre-condition.
-       *
-       * Condition: ball is in-range.
-       * Condition: ball is still in air.
-       * Condition: not currently swinging.
-       */
-
-      return (
-        vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
-        p.ball.pos.y > 0 &&
-        p.swing_time < 0.1 &&
-        btn(button.z)
-      )
-    }
-  )
-
+  */
+  /*
   const game_instance = {
     court_lines: court_lines,
     net_lines: net_lines,
     cam: c,
     court: p,
     player: player_user,
-    opponent: player(
-      c,
-      b,
-      -0.5 * meter,
-      0,
-      -5 * meter,
-      player_ai,
-      vec3(-2.59 * meter, 0, -6.7 * meter),
-      vec3(2.59 * meter, 0, -0.5 * meter),
-      1,
-      function(p: Player): boolean {
-        /**
-         * Compute `player_to_ball` vector.
-         *
-         * Note: player's chest is 1m above the ground.
-         */
-
-        vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
-        p.player_to_ball.y += 1 * meter
-
-        /**
-         * Compute swing pre-condition.
-         *
-         * Condition: ball is in-range.
-         * Condition: ball is still in air.
-         * Condition: not currently swinging.
-         */
-
-        return (
-          vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
-          p.ball.pos.y > 0 &&
-          p.swing_time < 0.1
-        )
-      }
-    ),
+    opponent: ,
     ball: b,
     zero_vec: vec3(),
     post_rally_timer: 0,
@@ -930,34 +958,35 @@ function game(): Game {
     update: game_update,
     draw: game_draw,
   }
-
-  server = player_user
-  return game_instance
+  */
 }
 
 function game_update(g: Game): void {
+  /**
+   * Handle state transitions.
+   */
+
   if (g.player_score === win_score) {
-    next_game_state = state.player_win
+    g.next_state = state.player_one_win
     return
   }
 
   if (g.opponent_score === win_score) {
-    next_game_state = state.opponent_win
+    g.next_state = state.player_two_win
     return
   }
 
-  player_update(g.player)
-  player_update(g.opponent)
-  ball_update(g.ball)
+  /**
+   * TODO: Update post-rally timer.
+   */
 
+  /*
   // update post rally timer
   if (g.post_rally_timer > 0) {
     g.post_rally_timer -= 1
     if (g.post_rally_timer === 0) {
       next_game_state = state.serve
     }
-  } else {
-    // printh('wtf', 'test.log')
   }
 
   // set timer
@@ -986,30 +1015,30 @@ function game_update(g: Game): void {
     } else {
       g.opponent_score += 1
     }
-
-    // TODO: display score
   }
+  */
 }
 
-type DrawFunction = (g: Game) => void
-let order: Array<[Vec3, DrawFunction]> = []
 function game_draw(g: Game): void {
-  clear_order()
+  /*
   insert_into_order(g.zero_vec, game_draw_net)
   insert_into_order(g.player.pos, game_draw_player)
   insert_into_order(g.opponent.pos, game_draw_opponent)
   insert_into_order(g.ball.pos, game_draw_ball)
-
   for (let i = 0; i < order.length; i++) {
     order[i][1](g)
   }
+  */
 
-  //print(current_game_state)
-  //print(g.post_rally_timer)
+  /**
+   * Draw score.
+   */
+
   const str = g.player_score + ' - ' + g.opponent_score
   print(str, 64 - str.length * 2, 3, col.white)
 }
 
+/*
 function game_draw_net(g: Game): void {
   for (let i = 0; i < g.net_lines.length; i++) {
     const l = g.net_lines[i]
@@ -1025,34 +1054,43 @@ function game_draw_opponent(g: Game): void {
 function game_draw_ball(g: Game): void {
   ball_draw(g.ball)
 }
+*/
 
-function clear_order(): void {
-  order = []
-}
+/**
+ * Z-sorting.
+ */
 
-function insert_into_order(pos: Vec3, draw_fn: (g: Game) => void): void {
+type DrawFunction = (o: {}) => void
+
+/*
+function insert_into_order(pos: Vec3, draw_fn: (o: {}) => void): void {
   for (let i = 0; i < order.length; i++) {
     const current = order[i]
     if (pos.z < current[0].z) {
-      // move everything 1 over
+      // Move everything 1 over.
       for (let j = order.length - 1; j >= i; j--) {
         order[j + 1] = order[j]
       }
 
-      // then insert
-      // TODO: memory allocation, not super important though
+      // Insert.
       order[i] = [pos, draw_fn]
       return
     }
   }
+
   add(order, [pos, draw_fn])
 }
+*/
 
 /**
  * Player.
  */
 
-interface Player {
+interface Player extends Actor {
+  cam: Camera
+  ball: Ball
+  game: Game
+
   scale: number
   pos: Vec3
   vel: Vec3
@@ -1060,8 +1098,6 @@ interface Player {
   acc: Vec3
   desired_speed: number
   screen_pos: Vec3
-  cam: Camera
-  ball: Ball
   spare: Vec3
   up: Vec3
   hit: boolean
@@ -1084,7 +1120,8 @@ function player(
   upper_left_bound: Vec3,
   lower_right_bound: Vec3,
   player_dir: -1 | 1,
-  swing_condition: (p: Player) => boolean
+  swing_condition: (p: Player) => boolean,
+  game: Game
 ): Player {
   const meter = 6
 
@@ -1108,6 +1145,9 @@ function player(
     lower_right_bound: lower_right_bound,
     player_dir: player_dir,
     swing_condition: swing_condition,
+    game: game,
+    update: player_update,
+    draw: player_draw,
   }
 }
 
@@ -1293,6 +1333,7 @@ function player_update(p: Player): void {
    * TODO: handle ball serve
    */
 
+  /*
   p.ball.is_kinematic = current_game_state === state.serve
   if (current_game_state === state.serve && server === p) {
     p.ball.pos.x = p.pos.x + 0.4 * meter
@@ -1317,6 +1358,7 @@ function player_update(p: Player): void {
 
     return
   }
+  */
 
   /**
    * Update swing state.
@@ -1447,7 +1489,7 @@ declare var ball_update: (b: Ball) => void
     // bounds check.
     if (b.pos.y < 0) {
       b.pos.y = 0
-      next_game_state = state.post_rally
+      // next_game_state = state.post_rally
     }
 
     // compute new screen position.
