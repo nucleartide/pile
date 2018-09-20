@@ -244,6 +244,10 @@ function _update60(): void {
 }
 
 function _draw(): void {
+  /**
+   * Clear screen.
+   */
+
   cls(col.dark_purple)
 
   /**
@@ -264,10 +268,15 @@ function _draw(): void {
   const court = actors_obj.court
   court.draw(court)
 
+  // Draw z-sorted actors.
   for (let i = 0; i < order.length; i++) {
     const a = order[i][1]
     a.draw(a)
   }
+
+  // Draw game last.
+  const game = actors_obj.game
+  game.draw(game)
 }
 
 /*
@@ -789,8 +798,8 @@ function polygon_edge(
     t = (t === xl && xr) || xl
   }
 
-  // for each scanline in range, compute left or right side.
-  // we must use floored y, since we are computing sides for
+  // For each scanline in range, compute left or right side.
+  // We must use floored y, since we are computing sides for
   // integer y-offsets.
   const ys = max(fy1, 0)
   const ye = min(fy2, 127)
@@ -802,7 +811,7 @@ function polygon_edge(
   return [ys, ye]
 }
 
-// note: polygon must be convex. concave polygons draw artifacts.
+// Note: polygon must be convex. Concave polygons draw artifacts.
 function polygon_draw(p: polygon): void {
   const points = p.points_screen
   const xl: NumberMap = {},
@@ -913,59 +922,14 @@ function game(c: Court, b: Ball): Game {
     state: state.player_one_serve,
     next_state: state.player_one_serve,
   }
-
-  /*
-  var [collides, intersection] = net_collides_with(
-    n,
-    vec3(0, 1.6 * meter_unit, -1 * meter_unit),
-    vec3(0, 1.6 * meter_unit, -2 * meter_unit)
-  )
-  assert(!collides, 'does not collide')
-  var [collides, intersection] = net_collides_with(
-    n,
-    vec3(-5 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
-    vec3(-7 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
-  )
-  assert(!collides, 'does not collide')
-  var [collides, intersection] = net_collides_with(
-    n,
-    vec3(-3 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
-    vec3(3 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
-  )
-  assert(collides, 'collides')
-  if (intersection) vec3_print(intersection)
-  stop()
-  */
-
-  /*
-
-  */
-  /*
-  const game_instance = {
-    court_lines: court_lines,
-    net_lines: net_lines,
-    cam: c,
-    court: p,
-    player: player_user,
-    opponent: ,
-    ball: b,
-    zero_vec: vec3(),
-    post_rally_timer: 0,
-    player_score: 0,
-    opponent_score: 0,
-    net: n,
-    server: player_user,
-    update: game_update,
-    draw: game_draw,
-  }
-  */
 }
 
-function game_update(g: Game): void {
-  /**
-   * Handle state transitions.
-   */
+/**
+ * TODO: Handle state transitions in `game_update`.
+ */
 
+function game_update(g: Game): void {
+  /*
   if (g.player_score === win_score) {
     g.next_state = state.player_one_win
     return
@@ -976,11 +940,6 @@ function game_update(g: Game): void {
     return
   }
 
-  /**
-   * TODO: Update post-rally timer.
-   */
-
-  /*
   // update post rally timer
   if (g.post_rally_timer > 0) {
     g.post_rally_timer -= 1
@@ -1093,8 +1052,6 @@ function player(
   swing_condition: (p: Player) => boolean,
   game: Game
 ): Player {
-  const meter = 6
-
   return {
     scale: meter,
     pos: vec3(x, y, z),
@@ -1233,10 +1190,6 @@ function player_swing(p: Player): void {
     p.spare.y += 10
     vec3_add(p.ball.vel, p.ball.vel, p.spare)
   }
-
-  // TODO: Left-side lob.
-  // TODO: Left overhead.
-  // TODO: Right overhead.
 }
 
 function player_move(p: Player): void {
@@ -1349,9 +1302,10 @@ function player_draw(p: Player): void {
   const width = 10
   const height = 25
 
-  // draw shadow
+  // Draw shadow.
   circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
 
+  // Draw player.
   rectfill(
     round(p.screen_pos.x - width / 2),
     round(p.screen_pos.y - height),
@@ -1450,16 +1404,12 @@ declare var ball_update: (b: Ball) => void
 
         // apply change in position.
         vec3_add(b.pos, b.pos, spare)
-
-        // TODO: temporary
-        // b.pos.y = 1.2 * meter_unit
       }
     }
 
     // bounds check.
     if (b.pos.y < 0) {
       b.pos.y = 0
-      // next_game_state = state.post_rally
     }
 
     // compute new screen position.
@@ -1483,13 +1433,6 @@ function ball_draw(b: Ball): void {
 
   // draw ball
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.yellow)
-
-  //print(b.is_kinematic)
-  //vec3_print(b.pos)
-  //vec3_print(b.vel)
-  //vec3_print(b.acc)
-  //print('intersects:')
-  //print(b.intersects)
 }
 
 /**
@@ -1556,7 +1499,6 @@ function net_collides_with(
 
   // z = m2*y + z0, set z to 0 and solve for y
   const m2 = (next_pos.z - prev_pos.z) / (next_pos.y - prev_pos.y)
-  //printh('m2:' + m2, 'test.log')
   const y = -z0 / m2
   const y_at_net = prev_pos.y + y
   const y_in_range = n.net_bottom <= y_at_net && y_at_net < n.net_top
@@ -1564,11 +1506,31 @@ function net_collides_with(
     return [false, null]
   }
 
-  //printh('collides', 'test.log')
-  //vec3_printh(prev_pos)
-  //vec3_printh(next_pos)
   return [true, vec3(x_at_net, y_at_net, 0)]
 }
+
+/*
+var [collides, intersection] = net_collides_with(
+  n,
+  vec3(0, 1.6 * meter_unit, -1 * meter_unit),
+  vec3(0, 1.6 * meter_unit, -2 * meter_unit)
+)
+assert(!collides, 'does not collide')
+var [collides, intersection] = net_collides_with(
+  n,
+  vec3(-5 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
+  vec3(-7 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
+)
+assert(!collides, 'does not collide')
+var [collides, intersection] = net_collides_with(
+  n,
+  vec3(-3 * meter_unit, 1.2 * meter_unit, -1 * meter_unit),
+  vec3(3 * meter_unit, 1.2 * meter_unit, 1 * meter_unit)
+)
+assert(collides, 'collides')
+if (intersection) vec3_print(intersection)
+stop()
+*/
 
 /**
  * Win state.
