@@ -174,7 +174,8 @@ function _init(): void {
       )
     },
     g,
-    true
+    true,
+    player_side.left
   )
 
   /**
@@ -216,7 +217,8 @@ function _init(): void {
       )
     },
     g,
-    false
+    false,
+    player_side.right
   )
 
   /**
@@ -902,9 +904,11 @@ function cam_project(c: Camera, out: Vec3, v: Vec3): void {
 interface Game extends Actor {
   court: Court
   ball: Ball
+
   post_rally_timer: number
-  player_score: number
-  opponent_score: number
+  left_side_score: number
+  right_side_score: number
+
   state: state
   next_state: state
   server?: Player
@@ -917,8 +921,8 @@ function game(c: Court, b: Ball): Game {
     court: c,
     ball: b,
     post_rally_timer: 0,
-    player_score: 0,
-    opponent_score: 0,
+    left_side_score: 1,
+    right_side_score: 0,
     state: state.serve,
     next_state: state.serve,
   }
@@ -983,8 +987,19 @@ function game_draw(g: Game): void {
    * Draw score.
    */
 
-  const str = g.player_score + ' - ' + g.opponent_score
+  const str = g.left_side_score + ' - ' + g.right_side_score
   print(str, 64 - str.length * 2, 3, col.white)
+}
+
+/**
+ * Player side.
+ *
+ * (The sides are kinda arbitrary.)
+ */
+
+enum player_side {
+  left,
+  right,
 }
 
 /**
@@ -1032,15 +1047,16 @@ interface Player extends Actor {
   // Acceleration.
   acc: Vec3
   desired_speed: number
+  input_method: (p: Player) => void
+
+  // Player side.
+  player_side: player_side
 
   // TODO.
   spare: Vec3
   up: Vec3
   player_to_ball: Vec3
   swing_time: number
-  input_method: (p: Player) => void
-  upper_left_bound: Vec3
-  lower_right_bound: Vec3
   player_dir: -1 | 1
   swing_condition: (p: Player) => boolean
 }
@@ -1057,7 +1073,8 @@ function player(
   player_dir: -1 | 1,
   swing_condition: (p: Player) => boolean,
   game: Game,
-  is_initial_server: boolean
+  is_initial_server: boolean,
+  player_side: player_side
 ): Player {
   const p = {
     pos: vec3(x, y, z),
@@ -1073,13 +1090,12 @@ function player(
     player_to_ball: vec3(),
     swing_time: 0,
     input_method: input_method,
-    upper_left_bound: upper_left_bound,
-    lower_right_bound: lower_right_bound,
     player_dir: player_dir,
     swing_condition: swing_condition,
     game: game,
     update: player_update,
     draw: player_draw,
+    player_side: player_side,
   }
 
   if (is_initial_server) {
@@ -1102,25 +1118,32 @@ function player_ai(p: Player): void {
    */
 
   vec3_zero(p.acc)
+
+  /*
   vec3_sub(p.acc, p.ball.pos, p.pos)
   p.acc.y = 0
+  */
 
   /**
    * Compute `player_to_ball` vector.
    */
 
+  /*
   vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
   p.player_to_ball.y += 1 * meter
+  */
 
   /**
    * If ball is in range, swing.
    */
 
+  /*
   const in_range = vec3_magnitude(p.player_to_ball) < 2.5 * meter
   if (in_range) {
     printh('opponent swing', 'test.log')
     player_swing(p)
   }
+  */
 }
 
 function player_swing(p: Player): void {
@@ -1239,11 +1262,22 @@ function player_move(p: Player): void {
    * Bounds checking.
    */
 
-  if (p.pos.x < p.upper_left_bound.x) p.pos.x = p.upper_left_bound.x
-  if (p.pos.x > p.lower_right_bound.x) p.pos.x = p.lower_right_bound.x
+  if (p.game.state === state.serve) {
+    const side = p.player_side
 
-  if (p.pos.z < p.upper_left_bound.z) p.pos.z = p.upper_left_bound.z
-  if (p.pos.z > p.lower_right_bound.z) p.pos.z = p.lower_right_bound.z
+    let score: number
+    if (side === player_side.left) {
+      score = p.game.left_side_score
+    } else {
+      score = p.game.right_side_score
+    }
+
+    if (score % 2 === 0) {
+      player_bounds_check(p, p.game.court.singles_even_bounds)
+    } else {
+      player_bounds_check(p, p.game.court.singles_odd_bounds)
+    }
+  }
 
   /**
    * Update screen position.
@@ -1252,16 +1286,36 @@ function player_move(p: Player): void {
   cam_project(p.cam, p.screen_pos, p.pos)
 }
 
+function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
+  const upper_left_bound = bounds[0]
+  const lower_right_bound = bounds[1]
+
+  if (p.pos.x < upper_left_bound.x) {
+    p.pos.x = upper_left_bound.x
+  }
+
+  if (p.pos.x > lower_right_bound.x) {
+    p.pos.x = lower_right_bound.x
+  }
+
+  if (p.pos.z < upper_left_bound.z) {
+    p.pos.z = upper_left_bound.z
+  }
+
+  if (p.pos.z > lower_right_bound.z) {
+    p.pos.z = lower_right_bound.z
+  }
+}
+
 function player_update(p: Player): void {
   /**
    * Player is serving.
    */
 
   if (p.game.state === state.serve && p.game.server === p) {
-    // Move player within serve bounds.
-
-    // TODO.
-    // player_move(p)
+    // Move player.
+    // (Bounds check occurs in `player_move`.)
+    player_move(p)
     return
   }
 
@@ -1597,6 +1651,8 @@ interface Court extends Actor {
   cam: Camera
   court_lines: Array<line>
   poly: polygon
+  singles_even_bounds: [Vec3, Vec3]
+  singles_odd_bounds: [Vec3, Vec3]
 }
 
 function court(court_lines: Array<line>, cam: Camera): Court {
@@ -1607,12 +1663,24 @@ function court(court_lines: Array<line>, cam: Camera): Court {
     vec3(3.8 * meter, 0, -7.7 * meter),
   ])
 
+  const singles_even_bounds: [Vec3, Vec3] = [
+    vec3(0, 0, 1.98 * meter),
+    vec3(2.59 * meter, 0, 6.7 * meter),
+  ]
+
+  const singles_odd_bounds: [Vec3, Vec3] = [
+    vec3(-2.59 * meter, 0, 1.98 * meter),
+    vec3(0, 0, 6.7 * meter),
+  ]
+
   return {
     court_lines: court_lines,
     cam: cam,
     update: court_update,
     draw: court_draw,
     poly: p,
+    singles_even_bounds: singles_even_bounds,
+    singles_odd_bounds: singles_odd_bounds,
   }
 }
 
