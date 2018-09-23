@@ -921,8 +921,8 @@ function game(c: Court, b: Ball): Game {
     court: c,
     ball: b,
     post_rally_timer: 0,
-    left_side_score: 1,
-    right_side_score: 0,
+    left_side_score: 0,
+    right_side_score: 1,
     state: state.serve,
     next_state: state.serve,
   }
@@ -1050,14 +1050,19 @@ interface Player extends Actor {
   input_method: (p: Player) => void
 
   // Player side.
+  //
+  // The sides are kinda arbitrary, but are still named
+  // "left" and "right".
   player_side: player_side
+
+  // Is the player facing the -z, or z direction?
+  player_dir: -1 | 1
 
   // TODO.
   spare: Vec3
   up: Vec3
   player_to_ball: Vec3
   swing_time: number
-  player_dir: -1 | 1
   swing_condition: (p: Player) => boolean
 }
 
@@ -1264,18 +1269,29 @@ function player_move(p: Player): void {
 
   if (p.game.state === state.serve) {
     const side = p.player_side
+    let player_score: number
+    let opponent_score: number
 
-    let score: number
     if (side === player_side.left) {
-      score = p.game.left_side_score
+      player_score = p.game.left_side_score
+      opponent_score = p.game.right_side_score
     } else {
-      score = p.game.right_side_score
+      player_score = p.game.right_side_score
+      opponent_score = p.game.left_side_score
     }
 
-    if (score % 2 === 0) {
-      player_bounds_check(p, p.game.court.singles_even_bounds)
+    if (p.game.server === p) {
+      if (player_score % 2 === 0) {
+        player_bounds_check(p, p.game.court.singles_even_bounds)
+      } else {
+        player_bounds_check(p, p.game.court.singles_odd_bounds)
+      }
     } else {
-      player_bounds_check(p, p.game.court.singles_odd_bounds)
+      if (opponent_score % 2 === 0) {
+        player_bounds_check(p, p.game.court.singles_odd_bounds)
+      } else {
+        player_bounds_check(p, p.game.court.singles_even_bounds)
+      }
     }
   }
 
@@ -1298,32 +1314,31 @@ function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
     p.pos.x = lower_right_bound.x
   }
 
-  if (p.pos.z < upper_left_bound.z) {
+  if (p.player_dir === -1 && p.pos.z < upper_left_bound.z) {
     p.pos.z = upper_left_bound.z
   }
 
-  if (p.pos.z > lower_right_bound.z) {
+  if (p.player_dir === -1 && p.pos.z > lower_right_bound.z) {
     p.pos.z = lower_right_bound.z
+  }
+
+  if (p.player_dir === 1 && p.pos.z > -upper_left_bound.z) {
+    p.pos.z = -upper_left_bound.z
+  }
+
+  if (p.player_dir === 1 && p.pos.z < -lower_right_bound.z) {
+    p.pos.z = -lower_right_bound.z
   }
 }
 
 function player_update(p: Player): void {
   /**
-   * Player is serving.
+   * Serve.
    */
 
-  if (p.game.state === state.serve && p.game.server === p) {
-    // Move player.
-    // (Bounds check occurs in `player_move`.)
+  if (p.game.state === state.serve) {
+    // Move player. (Bounds check occurs in `player_move`.)
     player_move(p)
-    return
-  }
-
-  /**
-   * Someone else is serving.
-   */
-
-  if (p.game.state === state.serve && p.game.server !== p) {
     return
   }
 
