@@ -76,7 +76,8 @@ interface Actor {
  */
 
 enum state {
-  serve,
+  pre_serve, // "drop ball" to transition to "serving"
+  serving, // "swing" to transition to "rally"
   rally,
   post_rally,
 }
@@ -923,8 +924,8 @@ function game(c: Court, b: Ball): Game {
     post_rally_timer: 0,
     left_side_score: 0,
     right_side_score: 1,
-    state: state.serve,
-    next_state: state.serve,
+    state: state.pre_serve,
+    next_state: state.pre_serve,
   }
 }
 
@@ -1267,7 +1268,7 @@ function player_move(p: Player): void {
    * Bounds checking.
    */
 
-  if (p.game.state === state.serve) {
+  if (p.game.state === state.pre_serve) {
     const side = p.player_side
     let player_score: number
     let opponent_score: number
@@ -1331,14 +1332,31 @@ function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
   }
 }
 
+function player_move_ball(p: Player): void {
+  // p.game.ball
+}
+
 function player_update(p: Player): void {
+  /**
+   * Prior to serve.
+   */
+
+  if (p.game.state === state.pre_serve) {
+    player_move(p)
+    player_move_ball(p)
+    return
+  }
+
   /**
    * Serve.
    */
 
-  if (p.game.state === state.serve) {
-    // Move player. (Bounds check occurs in `player_move`.)
-    player_move(p)
+  if (p.game.state === state.serving) {
+    // pre-serve
+    //   drop ball
+    // serving
+    //   swing
+    // rally
     return
   }
 
@@ -1428,106 +1446,111 @@ function player_draw(p: Player): void {
  */
 
 interface Ball extends Actor {
+  // Position.
   pos: Vec3
   shadow_pos: Vec3
-  vel: Vec3
-  vel60: Vec3
-  acc: Vec3
-  acc60: Vec3
   screen_pos: Vec3
   screen_shadow_pos: Vec3
+
+  // Velocity.
+  vel: Vec3
+  vel60: Vec3
+
+  // Acceleration.
+  acc: Vec3
+
+  // Dependencies.
   cam: Camera
-  is_kinematic: boolean
   net: Net
-  intersects: boolean
+
+  // State.
+  is_kinematic: boolean
+
+  // Spare vec3's for computation.
+  spare: Vec3
+  next_pos: Vec3
 }
 
 function ball(c: Camera, n: Net): Ball {
-  const meter = 6
-
   return {
     pos: vec3(0, 3 * meter, 5 * meter),
     shadow_pos: vec3(),
     vel: vec3(0, 1 * meter, 0),
     vel60: vec3(),
     acc: vec3(0, -10 * meter, 0),
-    acc60: vec3(),
     screen_pos: vec3(),
     screen_shadow_pos: vec3(),
     cam: c,
     is_kinematic: false,
     net: n,
-    intersects: false,
     update: ball_update,
     draw: ball_draw,
+    spare: vec3(),
+    next_pos: vec3(),
   }
 }
 
-declare var ball_update: (b: Ball) => void
-{
-  const spare = vec3()
-  const next_pos = vec3()
-  ball_update = (b: Ball): void => {
-    if (!b.is_kinematic && b.pos.y > 0) {
-      // compute change in velocity for this frame.
-      vec3_assign(spare, b.acc)
-      vec3_scale(spare, 1 / 60)
+function ball_update(b: Ball): void {
+  if (!b.is_kinematic && b.pos.y > 0) {
+    // Compute change in velocity for this frame.
+    vec3_assign(b.spare, b.acc)
+    vec3_scale(b.spare, 1 / 60)
 
-      // apply change in velocity.
-      vec3_add(b.vel, b.vel, spare)
+    // Apply change in velocity.
+    vec3_add(b.vel, b.vel, b.spare)
 
-      // compute change in position for this frame.
-      vec3_assign(spare, b.vel)
-      vec3_scale(spare, 1 / 60)
+    // Compute change in position for this frame.
+    vec3_assign(b.spare, b.vel)
+    vec3_scale(b.spare, 1 / 60)
 
-      // TODO
-      // check if there is an intersection
-      vec3_zero(next_pos)
-      vec3_add(next_pos, b.pos, spare)
-      const [intersects, intersection] = net_collides_with(
-        b.net,
-        b.pos,
-        next_pos
-      )
-      b.intersects = intersects
-      if (intersects && intersection) {
-        // if in front of net
-        b.pos.x = intersection.x
-        b.pos.y = intersection.y
-        if (b.pos.z > 0) {
-          // set position to slightly in front of net
-          b.pos.z = 1
-        } else if (b.pos.z < 0) {
-          // set position to slightly behind net
-          b.pos.z = -1
-        } else {
-          assert(false)
-        }
-        // reverse z-component of velocity
-        b.vel.z = -b.vel.z
-        vec3_scale(b.vel, 0.1)
+    // Compute next position.
+    vec3_zero(b.next_pos)
+    vec3_add(b.next_pos, b.pos, b.spare)
+
+    // Check if there is an intersection.
+    const [intersects, intersection] = net_collides_with(
+      b.net,
+      b.pos,
+      b.next_pos
+    )
+
+    if (intersects && intersection) {
+      // Set ball's position to intersection point.
+      b.pos.x = intersection.x
+      b.pos.y = intersection.y
+
+      if (b.pos.z > 0) {
+        // Set position to slightly in front of net.
+        b.pos.z = 1
+      } else if (b.pos.z < 0) {
+        // Set position to slightly behind net.
+        b.pos.z = -1
       } else {
-        vec3_assign(spare, b.vel)
-        vec3_scale(spare, 1 / 60)
-
-        // apply change in position.
-        vec3_add(b.pos, b.pos, spare)
+        // Throw exception, this should mostly never happen.
+        assert(false)
       }
+
+      // Reverse z-component of velocity, scaled down a little.
+      b.vel.z = -b.vel.z
+      vec3_scale(b.vel, 0.1)
+    } else {
+      // Apply change in position.
+      vec3_add(b.pos, b.pos, b.spare)
     }
-
-    // bounds check.
-    if (b.pos.y < 0) {
-      b.pos.y = 0
-    }
-
-    // compute new screen position.
-    cam_project(b.cam, b.screen_pos, b.pos)
-
-    // compute new screen position for shadow
-    vec3_assign(b.shadow_pos, b.pos)
-    b.shadow_pos.y = 0
-    cam_project(b.cam, b.screen_shadow_pos, b.shadow_pos)
   }
+
+  // Bounds check.
+  if (b.pos.y < 0) {
+    b.pos.y = 0
+  }
+
+  // Compute new screen position.
+  cam_project(b.cam, b.screen_pos, b.pos)
+
+  // Compute new screen position for shadow.
+  vec3_assign(b.shadow_pos, b.pos)
+  b.shadow_pos.y = 0
+  cam_project(b.cam, b.screen_shadow_pos, b.shadow_pos)
 }
 
 function ball_draw(b: Ball): void {
