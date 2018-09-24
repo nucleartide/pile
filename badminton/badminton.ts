@@ -226,7 +226,9 @@ function _init(): void {
    * Initialize actors.
    */
 
-  actors = [c, n, crt, b, g, player_user, opponent]
+  // Ball should come after Players to avoid lag.
+  actors = [c, n, crt, g, player_user, opponent, b]
+
   actors_obj = {
     camera: c,
     net: n,
@@ -1028,6 +1030,17 @@ function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
 }
 
 /**
+ * Player stance.
+ *
+ * Assume that all players are righties.
+ */
+
+enum PlayerStance {
+  Forehand,
+  Backhand,
+}
+
+/**
  * Player.
  */
 
@@ -1058,6 +1071,9 @@ interface Player extends Actor {
 
   // Is the player facing the -z, or z direction?
   player_dir: -1 | 1
+
+  // Forehand or backhand?
+  player_stance: PlayerStance
 
   // TODO.
   spare: Vec3
@@ -1102,6 +1118,7 @@ function player(
     update: player_update,
     draw: player_draw,
     player_side: player_side,
+    player_stance: PlayerStance.Forehand,
   }
 
   if (is_initial_server) {
@@ -1243,6 +1260,18 @@ function player_move(p: Player): void {
   p.input_method(p)
 
   /**
+   * Compute player stance.
+   */
+
+  if (p.acc.x > 0) {
+    p.player_stance = PlayerStance.Forehand
+  }
+
+  if (p.acc.x < 0) {
+    p.player_stance = PlayerStance.Backhand
+  }
+
+  /**
    * Normalize & scale acceleration.
    */
 
@@ -1333,7 +1362,22 @@ function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
 }
 
 function player_move_ball(p: Player): void {
-  // p.game.ball
+  // Update ball's position.
+  p.game.ball.is_kinematic = true
+  vec3_assign(p.game.ball.pos, p.pos)
+  p.game.ball.pos.y += 1 * meter
+
+  /**
+   * Place ball on player's forehand or backhand side.
+   */
+
+  if (p.player_stance === PlayerStance.Forehand) {
+    p.game.ball.pos.x += 0.1 * meter
+  }
+
+  if (p.player_stance === PlayerStance.Backhand) {
+    p.game.ball.pos.x -= 0.1 * meter
+  }
 }
 
 function player_update(p: Player): void {
@@ -1343,7 +1387,11 @@ function player_update(p: Player): void {
 
   if (p.game.state === state.pre_serve) {
     player_move(p)
-    player_move_ball(p)
+
+    if (p.game.server === p) {
+      player_move_ball(p)
+    }
+
     return
   }
 
