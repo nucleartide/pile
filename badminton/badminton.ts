@@ -149,23 +149,20 @@ function _init(): void {
     vec3(-2.59 * meter, 0, 0.5 * meter),
     vec3(2.59 * meter, 0, 6.7 * meter),
     -1,
+    /*
     function(p: Player): boolean {
-      /**
        * Compute `player_to_ball` vector.
        *
        * Note: player's chest is 1m above the ground.
-       */
 
       vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
       p.player_to_ball.y += 1 * meter
 
-      /**
        * Compute swing pre-condition.
        *
        * Condition: ball is in-range.
        * Condition: ball is still in air.
        * Condition: not currently swinging.
-       */
 
       return (
         vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
@@ -174,9 +171,12 @@ function _init(): void {
         btn(button.z)
       )
     },
+    */
     g,
     true,
-    player_side.left
+    player_side.left,
+    player_human_swing,
+    player_human_wind_up
   )
 
   /**
@@ -193,23 +193,20 @@ function _init(): void {
     vec3(-2.59 * meter, 0, -6.7 * meter),
     vec3(2.59 * meter, 0, -0.5 * meter),
     1,
+    /*
     function(p: Player): boolean {
-      /**
        * Compute `player_to_ball` vector.
        *
        * Note: player's chest is 1m above the ground.
-       */
 
       vec3_sub(p.player_to_ball, p.ball.pos, p.pos)
       p.player_to_ball.y += 1 * meter
 
-      /**
        * Compute swing pre-condition.
        *
        * Condition: ball is in-range.
        * Condition: ball is still in air.
        * Condition: not currently swinging.
-       */
 
       return (
         vec3_magnitude(p.player_to_ball) < 2.5 * meter &&
@@ -217,9 +214,12 @@ function _init(): void {
         p.swing_time < 0.1
       )
     },
+    */
     g,
     false,
-    player_side.right
+    player_side.right,
+    player_cpu_swing,
+    player_cpu_wind_up
   )
 
   /**
@@ -936,6 +936,8 @@ function game(c: Court, b: Ball): Game {
  */
 
 function game_update(g: Game): void {
+  g.state = g.next_state
+
   /*
   if (g.player_score === win_score) {
     g.next_state = state.player_one_win
@@ -1041,6 +1043,15 @@ enum PlayerStance {
 }
 
 /**
+ * Swing state.
+ */
+
+enum SwingState {
+  Idle,
+  Winding,
+}
+
+/**
  * Player.
  */
 
@@ -1075,12 +1086,19 @@ interface Player extends Actor {
   // Forehand or backhand?
   player_stance: PlayerStance
 
+  // Swing-related properties.
+  swing_state: SwingState
+  wind_up_condition: (p: Player) => boolean
+  swing2_condition: (p: Player) => boolean
+
+  // TODO:
+  // swing_time: number
+  // swing_condition: (p: Player) => boolean
+
   // TODO.
   spare: Vec3
   up: Vec3
   player_to_ball: Vec3
-  swing_time: number
-  swing_condition: (p: Player) => boolean
 }
 
 function player(
@@ -1093,10 +1111,11 @@ function player(
   upper_left_bound: Vec3,
   lower_right_bound: Vec3,
   player_dir: -1 | 1,
-  swing_condition: (p: Player) => boolean,
   game: Game,
   is_initial_server: boolean,
-  player_side: player_side
+  player_side: player_side,
+  swing_condition: (p: Player) => boolean,
+  wind_up_condition: (p: Player) => boolean
 ): Player {
   const p = {
     pos: vec3(x, y, z),
@@ -1119,6 +1138,9 @@ function player(
     draw: player_draw,
     player_side: player_side,
     player_stance: PlayerStance.Forehand,
+    swing_state: SwingState.Idle,
+    swing2_condition: swing_condition,
+    wind_up_condition: wind_up_condition,
   }
 
   if (is_initial_server) {
@@ -1126,6 +1148,22 @@ function player(
   }
 
   return p
+}
+
+function player_human_wind_up(p: Player): boolean {
+  return false
+}
+
+function player_human_swing(p: Player): boolean {
+  return false
+}
+
+function player_cpu_wind_up(p: Player): boolean {
+  return false
+}
+
+function player_cpu_swing(p: Player): boolean {
+  return false
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1170,83 +1208,83 @@ function player_ai(p: Player): void {
 }
 
 function player_swing(p: Player): void {
-  /**
-   * Enter a swing state.
-   */
-
-  p.swing_time = 1 * second
-
-  /**
-   * Right-side lob.
-   *
-   * Condition: ball is below 1m.
-   * Condition: ball is on right side.
-   * Condition: ball is in front of player.
-   */
-
-  if (
-    p.ball.pos.y < 1 * meter &&
-    p.player_to_ball.x > 0 &&
-    p.player_to_ball.z <= 1
-  ) {
-    // Slap `up` vector into `player_to_ball` vector.
-    vec3_cross(p.spare, p.up, p.player_to_ball)
-
-    // Add some forward velocity.
-    p.spare.z += 6 * meter * p.player_dir
-
-    // Add some upward velocity.
-    // The lower the ball, the greater the upward velocity.
-    p.spare.y += 50 + (1 * meter - p.ball.pos.y) * 5
-
-    // Add velocity to ball velocity.
-    vec3_add(p.ball.vel, p.ball.vel, p.spare)
-  }
-
-  // TODO: handle left side lob
-  if (
-    p.ball.pos.y < 1 * meter &&
-    p.player_to_ball.x < 0 * meter &&
-    p.player_to_ball.z <= 1
-  ) {
-    //printh('left side lob', 'test.log')
-    // execute right side lob:
-    // slap up vector into player_to_ball vector
-    vec3_cross(p.spare, p.player_to_ball, p.up)
-    // depending on ball's dist from 1m, add to vertical velocity
-    p.spare.z += 6 * meter * p.player_dir
-    p.spare.y += (1 * meter - p.ball.pos.y) * 5 + 50
-    // add velocity to ball velocity
-    vec3_add(p.ball.vel, p.ball.vel, p.spare)
-    //vec3_printh(p.spare)
-  }
-
-  // TODO: handle left overhead hit
-  if (
-    p.ball.pos.y >= 1 * meter &&
-    p.player_to_ball.z <= 1 &&
-    p.player_to_ball.x < 0 * meter
-  ) {
-    //printh('left overhead hit', 'test.log')
-    vec3_cross(p.spare, p.player_to_ball, p.up)
-    p.spare.z += 50 * 3 * p.player_dir
-    p.spare.y += 10
-    //p.spare.y -= 10
-    vec3_add(p.ball.vel, p.ball.vel, p.spare)
-  }
-
-  // TODO: handle right overhead hit
-  if (
-    p.ball.pos.y >= 1 * meter &&
-    p.player_to_ball.z <= 1 &&
-    p.player_to_ball.x > 0 * meter
-  ) {
-    //printh('right overhead hit', 'test.log')
-    vec3_cross(p.spare, p.up, p.player_to_ball)
-    p.spare.z += 50 * 3 * p.player_dir
-    p.spare.y += 10
-    vec3_add(p.ball.vel, p.ball.vel, p.spare)
-  }
+  //  /**
+  //   * Enter a swing state.
+  //   */
+  //
+  //  p.swing_time = 1 * second
+  //
+  //  /**
+  //   * Right-side lob.
+  //   *
+  //   * Condition: ball is below 1m.
+  //   * Condition: ball is on right side.
+  //   * Condition: ball is in front of player.
+  //   */
+  //
+  //  if (
+  //    p.ball.pos.y < 1 * meter &&
+  //    p.player_to_ball.x > 0 &&
+  //    p.player_to_ball.z <= 1
+  //  ) {
+  //    // Slap `up` vector into `player_to_ball` vector.
+  //    vec3_cross(p.spare, p.up, p.player_to_ball)
+  //
+  //    // Add some forward velocity.
+  //    p.spare.z += 6 * meter * p.player_dir
+  //
+  //    // Add some upward velocity.
+  //    // The lower the ball, the greater the upward velocity.
+  //    p.spare.y += 50 + (1 * meter - p.ball.pos.y) * 5
+  //
+  //    // Add velocity to ball velocity.
+  //    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  //  }
+  //
+  //  // TODO: handle left side lob
+  //  if (
+  //    p.ball.pos.y < 1 * meter &&
+  //    p.player_to_ball.x < 0 * meter &&
+  //    p.player_to_ball.z <= 1
+  //  ) {
+  //    //printh('left side lob', 'test.log')
+  //    // execute right side lob:
+  //    // slap up vector into player_to_ball vector
+  //    vec3_cross(p.spare, p.player_to_ball, p.up)
+  //    // depending on ball's dist from 1m, add to vertical velocity
+  //    p.spare.z += 6 * meter * p.player_dir
+  //    p.spare.y += (1 * meter - p.ball.pos.y) * 5 + 50
+  //    // add velocity to ball velocity
+  //    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  //    //vec3_printh(p.spare)
+  //  }
+  //
+  //  // TODO: handle left overhead hit
+  //  if (
+  //    p.ball.pos.y >= 1 * meter &&
+  //    p.player_to_ball.z <= 1 &&
+  //    p.player_to_ball.x < 0 * meter
+  //  ) {
+  //    //printh('left overhead hit', 'test.log')
+  //    vec3_cross(p.spare, p.player_to_ball, p.up)
+  //    p.spare.z += 50 * 3 * p.player_dir
+  //    p.spare.y += 10
+  //    //p.spare.y -= 10
+  //    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  //  }
+  //
+  //  // TODO: handle right overhead hit
+  //  if (
+  //    p.ball.pos.y >= 1 * meter &&
+  //    p.player_to_ball.z <= 1 &&
+  //    p.player_to_ball.x > 0 * meter
+  //  ) {
+  //    //printh('right overhead hit', 'test.log')
+  //    vec3_cross(p.spare, p.up, p.player_to_ball)
+  //    p.spare.z += 50 * 3 * p.player_dir
+  //    p.spare.y += 10
+  //    vec3_add(p.ball.vel, p.ball.vel, p.spare)
+  //  }
 }
 
 function player_move(p: Player): void {
@@ -1362,8 +1400,10 @@ function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
 }
 
 function player_move_ball(p: Player): void {
-  // Update ball's position.
+  // Make ball kinematic.
   p.game.ball.is_kinematic = true
+
+  // Update ball's position.
   vec3_assign(p.game.ball.pos, p.pos)
   p.game.ball.pos.y += 1 * meter
 
@@ -1386,6 +1426,14 @@ function player_update(p: Player): void {
    */
 
   if (p.game.state === state.pre_serve) {
+    if (btn(button.x)) {
+      // Make ball be affected by gravity again.
+      p.game.ball.is_kinematic = false
+
+      // Set next state.
+      p.game.next_state = state.serving
+    }
+
     player_move(p)
 
     if (p.game.server === p) {
@@ -1400,11 +1448,23 @@ function player_update(p: Player): void {
    */
 
   if (p.game.state === state.serving) {
-    // pre-serve
-    //   drop ball
-    // serving
-    //   swing
-    // rally
+    // If wind-up condition is met,
+    // transition to "winding" state.
+    if (p.wind_up_condition(p)) {
+      p.swing_state = SwingState.Winding
+      return
+    }
+
+    // If we're winding the racket,
+    // and the swing condition is met,
+    // transition to "idle" state.
+    // TODO: Swing. (Takes some time.)
+    // TODO: Transition to rally.
+    if (p.swing_state === SwingState.Winding && p.swing2_condition(p)) {
+      p.swing_state = SwingState.Idle
+      return
+    }
+
     return
   }
 
@@ -1461,15 +1521,17 @@ function player_update(p: Player): void {
    * Update swing state.
    */
 
-  p.swing_time = max(p.swing_time - 1, 0)
+  // p.swing_time = max(p.swing_time - 1, 0)
 
   /**
    * Swing at ball if condition is met.
    */
 
+  /*
   if (p.swing_condition(p)) {
     player_swing(p)
   }
+  */
 }
 
 function player_draw(p: Player): void {
