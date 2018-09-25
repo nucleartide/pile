@@ -1460,6 +1460,8 @@ function player_update(p: Player): void {
     // transition to "idle" state.
     // TODO: Swing. (Takes some time.)
     // TODO: Transition to rally.
+    // Does the transition to rally happen immediately?
+    // Or upon finishing the swing?
     if (p.swing_state === SwingState.Winding && p.swing2_condition(p)) {
       p.swing_state = SwingState.Idle
       return
