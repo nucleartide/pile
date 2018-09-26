@@ -227,7 +227,9 @@ function _init(): void {
    */
 
   // Ball should come after Players to avoid lag.
-  actors = [c, n, crt, g, player_user, opponent, b]
+  // Game should come first, because it holds
+  // current game state.
+  actors = [g, c, n, crt, player_user, opponent, b]
 
   actors_obj = {
     camera: c,
@@ -1460,12 +1462,12 @@ function player_update(p: Player): void {
     // transition to "idle" state.
     // TODO: Swing. (Takes some time.)
     // TODO: Transition to rally.
-    // Does the transition to rally happen immediately?
-    // Or upon finishing the swing?
     if (p.swing_state === SwingState.Winding && p.swing2_condition(p)) {
       p.swing_state = SwingState.Idle
       return
     }
+
+    // TODO: Wind the racket.
 
     return
   }
