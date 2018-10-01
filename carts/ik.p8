@@ -24,6 +24,7 @@ d = {
 -- enable mouse input
 poke(0x5f2d, 1)
 
+-- todo: this length isn't accounted for
 local arm_len = 20 -- pixels
 local racket_len = 20 -- pixels
 
