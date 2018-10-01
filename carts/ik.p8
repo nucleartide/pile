@@ -1,59 +1,135 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-ax,ay=64,64
-bx,by=80,40
-cx,cy=90,20
-dx,dy=100,10
+a = {
+  x = 64,
+  y = 64,
+}
 
-arm_len=20 -- pixels
-racket_len=20 -- pixels
+b = {
+  x = 80,
+  y = 40,
+}
+
+c = {
+  x = 90,
+  y = 20,
+}
+
+d = {
+  x = 100,
+  y = 10,
+}
+
+local arm_len = 20 -- pixels
+local racket_len = 20 -- pixels
 
 function _update()
- -- left
- if btn(0) then
-  dx-=1
- end
- 
- -- right
- if btn(1) then
-  dx+=1
- end
- 
- -- up
- if btn(2) then
-  dy-=1
- end
- 
- -- down
- if btn(3) then
-  dy+=1
- end
- 
- local len=mag(
-  dx-ax,
-  dy-ay
- )
+  if btn(0) then d.x -= 1 end -- left
+  if btn(1) then d.x += 1 end -- right
+  if btn(2) then d.y -= 1 end -- up
+  if btn(3) then d.y += 1 end -- down
+
+  --
+  -- calculate target & fixed.
+  --
+
+  local len = mag({
+    x = d.x - a.x,
+    y = d.y - a.y,
+  })
+
+  local m = min(len, arm_len + racket_len)
+
+  local n = normalize({
+    x = d.x - a.x,
+    y = d.y - a.y,
+  })
+
+  local t = {
+    x = a.x + n.x*m,
+    y = a.y + n.y*m,
+  }
+
+  local fixed = a
+
+  --
+  -- forward.
+  --
+
+  local new_head, new_tail = reach(c, b, t)
+  c = new_head
+  t = new_tail
+
+  new_head, new_tail = reach(b, a, t)
+  b = new_head
+  t = new_tail
+
+  a = t
+
+  --
+  -- backward.
+  --
+
+  new_head, new_tail = reach(a, b, fixed)
+  a = new_head
+  t = new_tail
+
+  new_head, new_tail = reach(b, c, t)
+  b = new_head
+  t = new_tail
+
+  c = t
 end
 
-function mag(x,y)
- return sqrt(x^2+y^2)
+function mag(v)
+  return sqrt(v.x^2 + v.y^2)
 end
 
-function normalize(x,y)
- local m=mag(x,y)
- assert(m==0)
- return x/m,y/m
+function normalize(v)
+ local m = mag(v)
+ assert(m ~= 0)
+ return {
+   x = v.x/m,
+   y = v.y/m,
+ }
+end
+
+function round(n)
+ return flr(n+0.5)
 end
 
 function _draw()
  cls()
- line(ax,ay,bx,by,7)
- line(bx,by,cx,cy,7)
- circfill(ax,ay,2,7)
- circfill(bx,by,2,7)
- circfill(cx,cy,2,7)
- circfill(dx,dy,2,7)
+ circfill(a.x,a.y,arm_len+racket_len,2)
+ line(a.x,a.y,b.x,b.y,7)
+ line(b.x,b.y,c.x,c.y,7)
+ circfill(a.x,a.y,2,7)
+ circfill(b.x,b.y,2,7)
+ circfill(c.x,c.y,2,7)
+ circfill(d.x,d.y,2,7)
+end
+
+-- return [new_head, new_tail], where new_head is now at target
+-- vec3 -> vec3 -> vec3 -> Array<vec3, vec3>
+function reach(head, tail, target)
+  -- current len
+  local x = tail.x-head.x
+  local y = tail.y-head.y
+  local dist = sqrt(x*x + y*y)
+
+  -- stretched len
+  local sx = tail.x-target.x
+  local sy = tail.y-target.y
+  local sdist = sqrt(sx*sx + sy*sy)
+
+  -- compute scale
+  local scale = dist / sdist
+
+  -- return stuff
+  local new_head = { x = target.x, y = target.y }
+  local new_tail = { x = target.x + sx*scale, y = target.y + sy*scale }
+  return new_head, new_tail
 end
 __map__
 00000c00c84c12000000000032332800c84c120000000000ceccd7ff00000600c84c120000000000ceccd7ff38b3edff00000000ceccd7ff0000060038b3edff00000000ceccd7ff38b3edff00000000323328000000060038b3edff0000000032332800c84c12000000000032332800000006003c8a0f0000000000ceccd7ff
