@@ -21,14 +21,19 @@ d = {
   y = 10,
 }
 
+-- enable mouse input
+poke(0x5f2d, 1)
+
 local arm_len = 20 -- pixels
 local racket_len = 20 -- pixels
 
 function _update()
-  if btn(0) then d.x -= 1 end -- left
-  if btn(1) then d.x += 1 end -- right
-  if btn(2) then d.y -= 1 end -- up
-  if btn(3) then d.y += 1 end -- down
+  --
+  -- process mouse input.
+  --
+
+  d.x = stat(32)
+  d.y = stat(33)
 
   --
   -- calculate target & fixed.
@@ -107,7 +112,7 @@ function _draw()
  circfill(a.x,a.y,2,7)
  circfill(b.x,b.y,2,7)
  circfill(c.x,c.y,2,7)
- circfill(d.x,d.y,2,7)
+ circfill(d.x,d.y,2,11)
 end
 
 -- return [new_head, new_tail], where new_head is now at target
