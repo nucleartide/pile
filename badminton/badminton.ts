@@ -1016,7 +1016,7 @@ function game_draw(g: Game): void {
 
   const str2 = g.mouse_x + ', ' + g.mouse_y
   print(str2, 64 - str2.length * 2, 8, col.indigo)
-  circfill(g.mouse_x, g.mouse_y, 2, col.white)
+  circfill(g.mouse_x, g.mouse_y, 2, col.green)
 }
 
 /**
