@@ -5,6 +5,7 @@
 declare function assert<T>(cond: boolean, message?: T): void
 declare function stop<T>(message?: T): void
 declare function printh<T>(str: T, filename?: string, overwrite?: boolean): void
+declare function stat(n: number): number
 
 /**
  * Program structure.
@@ -130,6 +131,7 @@ declare function btn(i: button_index, p?: PlayerIndex): boolean
  */
 
 declare function peek4(addr: number): number
+declare function poke(addr: number, val: number): void
 declare function poke4(addr: number, val: number): void
 declare function memcpy(
   dest_addr: number,

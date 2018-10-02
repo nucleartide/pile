@@ -17,6 +17,9 @@ const win_score = 1
 // Zero vector. Use it for z-sorting!
 const zero_vec = { x: 0, y: 0, z: 0 }
 
+// Enable dev kit.
+poke(0x5f2d, 1)
+
 /**
  * Color.
  */
@@ -917,6 +920,9 @@ interface Game extends Actor {
   state: state
   next_state: state
   server?: Player
+
+  mouse_x: number
+  mouse_y: number
 }
 
 function game(c: Court, b: Ball): Game {
@@ -930,6 +936,8 @@ function game(c: Court, b: Ball): Game {
     right_side_score: 1,
     state: state.pre_serve,
     next_state: state.pre_serve,
+    mouse_x: 0,
+    mouse_y: 0,
   }
 }
 
@@ -938,7 +946,12 @@ function game(c: Court, b: Ball): Game {
  */
 
 function game_update(g: Game): void {
+  // Update state. This should come first.
   g.state = g.next_state
+
+  // Update mouse input. This is temporary.
+  g.mouse_x = stat(32)
+  g.mouse_y = stat(33)
 
   /*
   if (g.player_score === win_score) {
@@ -996,6 +1009,14 @@ function game_draw(g: Game): void {
 
   const str = g.left_side_score + ' - ' + g.right_side_score
   print(str, 64 - str.length * 2, 3, col.white)
+
+  /**
+   * Debug mouse coordinates.
+   */
+
+  const str2 = g.mouse_x + ', ' + g.mouse_y
+  print(str2, 64 - str2.length * 2, 8, col.indigo)
+  circfill(g.mouse_x, g.mouse_y, 2, col.white)
 }
 
 /**
@@ -1097,6 +1118,9 @@ interface Player extends Actor {
   // swing_time: number
   // swing_condition: (p: Player) => boolean
 
+  // Exploratory.
+  arm_points: [Vec3, Vec3, Vec3]
+
   // TODO.
   spare: Vec3
   up: Vec3
@@ -1119,6 +1143,8 @@ function player(
   swing_condition: (p: Player) => boolean,
   wind_up_condition: (p: Player) => boolean
 ): Player {
+  const points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
+
   const p = {
     pos: vec3(x, y, z),
     vel: vec3(),
@@ -1143,6 +1169,7 @@ function player(
     swing_state: SwingState.Idle,
     swing2_condition: swing_condition,
     wind_up_condition: wind_up_condition,
+    arm_points: points,
   }
 
   if (is_initial_server) {
@@ -1541,6 +1568,7 @@ function player_update(p: Player): void {
 function player_draw(p: Player): void {
   const width = 10
   const height = 25
+  const arm_height = 15
 
   // Draw shadow.
   circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
@@ -1553,6 +1581,9 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  // Draw player range.
+  circfill(p.screen_pos.x, p.screen_pos.y - arm_height, 10, 7)
 }
 
 /**

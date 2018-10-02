@@ -94,7 +94,9 @@ end
 
 function normalize(v)
  local m = mag(v)
- assert(m ~= 0)
+ if m == 0 then
+  return {x=0,y=0}
+ end
  return {
    x = v.x/m,
    y = v.y/m,
