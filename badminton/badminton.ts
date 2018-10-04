@@ -18,7 +18,7 @@ const win_score = 1
 const zero_vec = { x: 0, y: 0, z: 0 }
 
 // Enable dev kit.
-poke(0x5f2d, 1)
+// poke(0x5f2d, 1)
 
 /**
  * Color.
@@ -1014,9 +1014,9 @@ function game_draw(g: Game): void {
    * Debug mouse coordinates.
    */
 
-  const str2 = g.mouse_x + ', ' + g.mouse_y
-  print(str2, 64 - str2.length * 2, 8, col.indigo)
-  circfill(g.mouse_x, g.mouse_y, 2, col.green)
+  // const str2 = g.mouse_x + ', ' + g.mouse_y
+  // print(str2, 64 - str2.length * 2, 8, col.indigo)
+  // circfill(g.mouse_x, g.mouse_y, 2, col.green)
 }
 
 /**
@@ -1113,6 +1113,7 @@ interface Player extends Actor {
   swing_state: SwingState
   wind_up_condition: (p: Player) => boolean
   swing2_condition: (p: Player) => boolean
+  swing_power: number
 
   // TODO:
   // swing_time: number
@@ -1120,6 +1121,7 @@ interface Player extends Actor {
 
   // Exploratory.
   arm_points: [Vec3, Vec3, Vec3]
+  arm_screen_points: [Vec3, Vec3, Vec3]
 
   // TODO.
   spare: Vec3
@@ -1144,6 +1146,7 @@ function player(
   wind_up_condition: (p: Player) => boolean
 ): Player {
   const points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
+  const more_points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
 
   const p = {
     pos: vec3(x, y, z),
@@ -1170,6 +1173,8 @@ function player(
     swing2_condition: swing_condition,
     wind_up_condition: wind_up_condition,
     arm_points: points,
+    arm_screen_points: more_points,
+    swing_power: 0,
   }
 
   if (is_initial_server) {
@@ -1237,6 +1242,7 @@ function player_ai(p: Player): void {
 }
 
 function player_swing(p: Player): void {
+  // TODO: need a more generic algo here.
   //  /**
   //   * Enter a swing state.
   //   */
@@ -1441,12 +1447,14 @@ function player_move_ball(p: Player): void {
    */
 
   if (p.player_stance === PlayerStance.Forehand) {
-    p.game.ball.pos.x += 0.1 * meter
+    p.game.ball.pos.x += 0.5 * meter
   }
 
   if (p.player_stance === PlayerStance.Backhand) {
-    p.game.ball.pos.x -= 0.1 * meter
+    p.game.ball.pos.x -= 0.5 * meter
   }
+
+  p.game.ball.pos.z += p.player_dir * 0.1 * meter
 }
 
 function player_update(p: Player): void {
@@ -1463,11 +1471,24 @@ function player_update(p: Player): void {
       p.game.next_state = state.serving
     }
 
-    player_move(p)
+    if (btn(button.z) && p.player_stance === PlayerStance.Backhand) {
+      // Make ball be affected by gravity again.
+      p.game.ball.is_kinematic = false
 
+      // Set next state.
+      p.game.next_state = state.serving
+
+      // Set swing state.
+      p.swing_state = SwingState.Winding
+    }
+
+    player_move(p)
     if (p.game.server === p) {
       player_move_ball(p)
     }
+    // Move arm afterward, since it depends
+    // on ball's location.
+    player_move_arm(p)
 
     return
   }
@@ -1477,22 +1498,33 @@ function player_update(p: Player): void {
    */
 
   if (p.game.state === state.serving) {
+    // If we are in a winding state,
+    // increase swing power.
+    // Remember to reset serve power later!
+    if (p.swing_state === SwingState.Winding) {
+      p.swing_power += 1 * (1 / 60)
+    }
+
     // If wind-up condition is met,
     // transition to "winding" state.
+    /*
     if (p.wind_up_condition(p)) {
       p.swing_state = SwingState.Winding
       return
     }
+    */
 
     // If we're winding the racket,
     // and the swing condition is met,
     // transition to "idle" state.
     // TODO: Swing. (Takes some time.)
     // TODO: Transition to rally.
+    /*
     if (p.swing_state === SwingState.Winding && p.swing2_condition(p)) {
       p.swing_state = SwingState.Idle
       return
     }
+    */
 
     // TODO: Wind the racket.
 
@@ -1565,6 +1597,24 @@ function player_update(p: Player): void {
   */
 }
 
+function player_move_arm(p: Player): void {
+  // Update socket point.
+  const socket = p.arm_points[0]
+  socket.x = p.pos.x + 0.3 * meter * -p.player_dir
+  socket.y = p.pos.y + 1 * meter
+  socket.z = p.pos.z
+
+  // Update racket head point.
+  const racket_head = p.arm_points[2]
+  racket_head.x = p.ball.pos.x
+  racket_head.y = p.ball.pos.y
+  racket_head.z = p.ball.pos.z
+
+  // Update screen points.
+  cam_project(p.cam, p.arm_screen_points[0], socket)
+  cam_project(p.cam, p.arm_screen_points[2], racket_head)
+}
+
 function player_draw(p: Player): void {
   const width = 10
   const height = 25
@@ -1583,7 +1633,22 @@ function player_draw(p: Player): void {
   )
 
   // Draw player range.
-  circfill(p.screen_pos.x, p.screen_pos.y - arm_height, 10, 7)
+  // circfill(p.screen_pos.x, p.screen_pos.y - arm_height, 10, 7)
+
+  //
+  // Draw player arm.
+  //
+
+  // Socket.
+  const socket = p.arm_screen_points[0]
+  circfill(socket.x, socket.y, 1, col.green)
+
+  // Racket head.
+  const racket_head = p.arm_screen_points[2]
+  circfill(racket_head.x, racket_head.y, 1, col.green)
+
+  // Print swing power.
+  print('swing power: ' + p.swing_power)
 }
 
 /**
@@ -1878,4 +1943,30 @@ function court_draw(c: Court): void {
     const l = c.court_lines[i]
     line_draw(l, c.cam)
   }
+}
+
+/**
+ * Reach.
+ */
+
+const reach_spare = vec3()
+function reach(head: Vec3, tail: Vec3, target: Vec3): [Vec3, Vec3] {
+  // current len
+  const len = vec3_dist(head, tail)
+
+  // stretched vec
+  const tail_to_target = vec3_sub(reach_spare, tail, target)
+  const stretched_len = vec3_magnitude(reach_spare)
+
+  // compute scale
+  const scale = len / stretched_len
+
+  return [
+    { x: target.x, y: target.y, z: target.z },
+    {
+      x: target.x + reach_spare.x * scale,
+      y: target.y + reach_spare.y * scale,
+      z: target.z + reach_spare.z * scale,
+    },
+  ]
 }
