@@ -353,9 +353,6 @@ function reach(
   target: Vec3,
   head_tail_len: number
 ): [Vec3, Vec3] {
-  // current len
-  // const len = vec3_dist(head, tail)
-
   // stretched vec
   const tail_to_target = vec3_sub(reach_spare, tail, target)
   const stretched_len = vec3_magnitude(reach_spare)
@@ -781,10 +778,6 @@ function game(c: Court, b: Ball): Game {
     mouse_y: 0,
   }
 }
-
-/**
- * TODO: Handle state transitions in `game_update`.
- */
 
 function game_update(g: Game): void {
   // Update state. This should come first.
@@ -1228,29 +1221,6 @@ function player_update(p: Player): void {
       // TODO: Swing.
     }
 
-    // If wind-up condition is met,
-    // transition to "winding" state.
-    /*
-    if (p.wind_up_condition(p)) {
-      p.swing_state = SwingState.Winding
-      return
-    }
-    */
-
-    // If we're winding the racket,
-    // and the swing condition is met,
-    // transition to "idle" state.
-    // TODO: Swing. (Takes some time.)
-    // TODO: Transition to rally.
-    /*
-    if (p.swing_state === SwingState.Winding && p.swing2_condition(p)) {
-      p.swing_state = SwingState.Idle
-      return
-    }
-    */
-
-    // TODO: Wind the racket.
-
     return
   }
 
@@ -1271,53 +1241,6 @@ function player_update(p: Player): void {
   }
 
   return
-
-  /**
-   * TODO: handle ball serve
-   */
-
-  /*
-  p.ball.is_kinematic = current_game_state === state.serve
-  if (current_game_state === state.serve && server === p) {
-    p.ball.pos.x = p.pos.x + 0.4 * meter
-    p.ball.pos.y = p.pos.y + 1.0 * meter
-    p.ball.pos.z = p.pos.z
-
-    if (btn(button.z)) {
-      // release ball
-      p.ball.is_kinematic = false
-
-      // give ball upward velocity
-      p.ball.vel.x = 0
-      p.ball.vel.y = 5 * meter
-      p.ball.vel.z = 0
-
-      // change state to playing
-      next_game_state = state.playing
-
-      // set swing time
-      p.swing_time = 1 * 60
-    }
-
-    return
-  }
-  */
-
-  /**
-   * Update swing state.
-   */
-
-  // p.swing_time = max(p.swing_time - 1, 0)
-
-  /**
-   * Swing at ball if condition is met.
-   */
-
-  /*
-  if (p.swing_condition(p)) {
-    player_swing(p)
-  }
-  */
 }
 
 function player_move_arm(p: Player): void {
@@ -1355,9 +1278,6 @@ function player_draw(p: Player): void {
     col.orange
   )
 
-  // Draw player range.
-  // circfill(p.screen_pos.x, p.screen_pos.y - arm_height, 10, 7)
-
   //
   // Draw player arm.
   //
@@ -1373,9 +1293,6 @@ function player_draw(p: Player): void {
   // Racket head.
   const racket_head = p.arm_screen_points[2]
   circfill(racket_head.x, racket_head.y, 1, col.pink)
-
-  // Print swing power.
-  print('swing power: ' + p.swing_power)
 }
 
 /**
