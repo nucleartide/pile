@@ -434,8 +434,6 @@ function _init(): void {
     0,
     5 * meter,
     player_keyboard_input,
-    vec3(-2.59 * meter, 0, 0.5 * meter),
-    vec3(2.59 * meter, 0, 6.7 * meter),
     -1,
     g,
     true,
@@ -455,8 +453,6 @@ function _init(): void {
     0,
     -5 * meter,
     player_ai,
-    vec3(-2.59 * meter, 0, -6.7 * meter),
-    vec3(2.59 * meter, 0, -0.5 * meter),
     1,
     g,
     false,
@@ -713,9 +709,9 @@ function cam(): Camera {
   }
 }
 
-function cam_update(c: Camera): void { }
+function cam_update(_c: Camera): void { }
 
-function cam_draw(c: Camera): void { }
+function cam_draw(_c: Camera): void { }
 
 function cam_project(c: Camera, out: Vec3, v: Vec3): void {
   // world to view.
@@ -886,8 +882,6 @@ function player(
   y: number,
   z: number,
   input_method: (p: Player) => void,
-  upper_left_bound: Vec3,
-  lower_right_bound: Vec3,
   player_dir: -1 | 1,
   game: Game,
   is_initial_server: boolean,
@@ -934,19 +928,19 @@ function player(
   return p
 }
 
-function player_human_wind_up(p: Player): boolean {
+function player_human_wind_up(_p: Player): boolean {
   return false
 }
 
-function player_human_swing(p: Player): boolean {
+function player_human_swing(_p: Player): boolean {
   return false
 }
 
-function player_cpu_wind_up(p: Player): boolean {
+function player_cpu_wind_up(_p: Player): boolean {
   return false
 }
 
-function player_cpu_swing(p: Player): boolean {
+function player_cpu_swing(_p: Player): boolean {
   return false
 }
 
@@ -973,7 +967,7 @@ function player_ai(p: Player): void {
    */
 }
 
-function player_swing(p: Player): void {
+function player_swing(_p: Player): void {
   // TODO.
 }
 
@@ -1264,7 +1258,6 @@ function player_move_arm(p: Player): void {
 function player_draw(p: Player): void {
   const width = 10
   const height = 25
-  const arm_height = 15
 
   // Draw shadow.
   circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
@@ -1446,7 +1439,7 @@ function net(lines: Array<line>, cam: Camera): Net {
   }
 }
 
-function net_update(n: Net): void { }
+function net_update(_n: Net): void { }
 
 function net_draw(n: Net): void {
   for (let i = 0; i < n.lines.length; i++) {
