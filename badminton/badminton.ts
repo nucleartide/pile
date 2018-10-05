@@ -1501,8 +1501,15 @@ function player_update(p: Player): void {
     // If we are in a winding state,
     // increase swing power.
     // Remember to reset serve power later!
-    if (p.swing_state === SwingState.Winding) {
+    if (p.swing_state === SwingState.Winding && btn(button.z)) {
       p.swing_power += 1 * (1 / 60)
+      return
+    }
+
+    if (p.swing_state === SwingState.Winding && !btn(button.z)) {
+      p.swing_state = SwingState.Idle
+      return
+      // TODO: Swing.
     }
 
     // If wind-up condition is met,
