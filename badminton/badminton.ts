@@ -437,38 +437,20 @@ function _init(): void {
   )
 
   /**
-   * Construct opponent.
-   */
-
-  const opponent = player(
-    c,
-    -0.5 * meter,
-    0,
-    -5 * meter,
-    player_ai,
-    1,
-    g,
-    false,
-    player_side.right
-  )
-
-  /**
    * Initialize actors.
    */
 
   // Ball should come after Players to avoid lag.
   // Game should come first, because it holds
   // current game state.
-  actors = [g, c, n, crt, player_user, opponent, b]
+  actors = [g, c, n, crt, player_user]
 
   actors_obj = {
     camera: c,
     net: n,
     court: crt,
-    ball: b,
     game: g,
     player: player_user,
-    opponent: opponent,
   }
 }
 
@@ -493,8 +475,6 @@ function _draw(): void {
   const order: OrderArray = []
   insert_into(order, zero_vec, actors_obj.net)
   insert_into(order, (actors_obj.player as Player).pos, actors_obj.player)
-  insert_into(order, (actors_obj.opponent as Player).pos, actors_obj.opponent)
-  insert_into(order, (actors_obj.ball as Ball).pos, actors_obj.ball)
 
   /**
    * Draw.
@@ -835,6 +815,7 @@ interface Player extends Actor {
   // Acceleration.
   acc: Vec3
   desired_speed: number
+  desired_speed_lerp_factor: number
   input_method: (p: Player) => void
 
   // Player side.
@@ -879,6 +860,7 @@ function player(
     vel60: vec3(),
     acc: vec3(),
     desired_speed: 10 * meter,
+    desired_speed_lerp_factor: 0.5,
     screen_pos: vec3(),
     cam: c,
     input_method: input_method,
@@ -900,33 +882,6 @@ function player(
   return p
 }
 
-function player_keyboard_input(p: Player): void {
-  if (btn(button.left)) p.acc.x -= p.desired_speed
-  if (btn(button.right)) p.acc.x += p.desired_speed
-  if (btn(button.up)) p.acc.z -= p.desired_speed
-  if (btn(button.down)) p.acc.z += p.desired_speed
-}
-
-function player_ai(p: Player): void {
-  /**
-   * Move in direction of ball.
-   */
-
-  vec3_zero(p.acc)
-
-  /**
-   * Compute `player_to_ball` vector.
-   */
-
-  /**
-   * If ball is in range, swing.
-   */
-}
-
-function player_swing(_p: Player): void {
-  // TODO.
-}
-
 function player_move(p: Player): void {
   /**
    * Compute acceleration.
@@ -935,7 +890,7 @@ function player_move(p: Player): void {
    */
 
   vec3_zero(p.acc)
-  // p.input_method(p)
+  p.input_method(p)
 
   /**
    * Compute player stance.
@@ -960,8 +915,7 @@ function player_move(p: Player): void {
    * Update velocity.
    */
 
-  const t = 0.5
-  vec3_lerp(p.vel, p.vel, p.acc, t)
+  vec3_lerp(p.vel, p.vel, p.acc, p.desired_speed_lerp_factor)
 
   /**
    * Update position.
@@ -976,18 +930,7 @@ function player_move(p: Player): void {
    */
 
   if (p.game.state === state.pre_serve) {
-    const side = p.player_side
-    let player_score: number
-    let opponent_score: number
-
-    if (side === player_side.left) {
-      player_score = p.game.left_side_score
-      opponent_score = p.game.right_side_score
-    } else {
-      player_score = p.game.right_side_score
-      opponent_score = p.game.left_side_score
-    }
-
+    const [player_score, opponent_score] = get_player_score(p)
     if (p.game.server === p) {
       if (player_score % 2 === 0) {
         player_bounds_check(p, p.game.court.singles_even_bounds)
@@ -1008,6 +951,38 @@ function player_move(p: Player): void {
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
+}
+
+function player_keyboard_input(p: Player): void {
+  if (btn(button.left)) p.acc.x -= p.desired_speed
+  if (btn(button.right)) p.acc.x += p.desired_speed
+  if (btn(button.up)) p.acc.z -= p.desired_speed
+  if (btn(button.down)) p.acc.z += p.desired_speed
+}
+
+// Return [player score, opponent score].
+/** !TupleReturn */
+function get_player_score(p: Player): [number, number] {
+  const side = p.player_side
+  let player_score: number
+  let opponent_score: number
+  if (side === player_side.left) {
+    player_score = p.game.left_side_score
+    opponent_score = p.game.right_side_score
+  } else {
+    player_score = p.game.right_side_score
+    opponent_score = p.game.left_side_score
+  }
+  return [player_score, opponent_score]
+}
+
+function player_ai(p: Player): void {
+  // Move in direction of ball.
+  vec3_zero(p.acc)
+
+  // Compute `player_to_ball` vector.
+
+  // If ball is in range, swing.
 }
 
 function player_bounds_check(p: Player, bounds: [Vec3, Vec3]): void {
@@ -1062,122 +1037,23 @@ function player_move_ball(p: Player): void {
   p.game.ball.pos.z += p.player_dir * 0.1 * meter
 }
 
-function player_move_arm(p: Player): void {
-  // Update socket point.
-  const socket = p.arm_points[0]
-  socket.x = p.pos.x + 0.3 * meter * -p.player_dir
-  socket.y = p.pos.y + 1 * meter
-  socket.z = p.pos.z
-
-  // Update racket head point.
-  const racket_head = p.arm_points[2]
-
-  // Update screen points.
-  cam_project(p.cam, p.arm_screen_points[0], socket)
-  cam_project(p.cam, p.arm_screen_points[2], racket_head)
+function player_pre_serve(p: Player): void {
+  player_move(p)
 }
 
 function player_update(p: Player): void {
-  /**
-   * Prior to serve.
-   */
-
   if (p.game.state === state.pre_serve) {
-    // TODO: temporary, move ball around using arrow keys and z and x
-    if (p.game.server === p) {
-      const racket_head = p.arm_points[2]
-      if (btn(button.up)) {
-        racket_head.y += 0.05 * meter
-      }
-      if (btn(button.down)) {
-        racket_head.y -= 0.05 * meter
-      }
-      if (btn(button.left)) {
-        racket_head.x -= 0.05 * meter
-      }
-      if (btn(button.right)) {
-        racket_head.x += 0.05 * meter
-      }
-      if (btn(button.z)) {
-        racket_head.z -= 0.05 * meter
-      }
-      if (btn(button.x)) {
-        racket_head.z += 0.05 * meter
-      }
-      cam_project(p.cam, p.arm_screen_points[2], racket_head)
-
-      // update screen points.
-      for (let i = 0; i < 3; i++) {
-        cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
-      }
-
-      return
-    }
-
-    return
-
-    if (btn(button.x)) {
-      // Make ball be affected by gravity again.
-      p.game.ball.is_kinematic = false
-
-      // Set next state.
-      p.game.next_state = state.serving
-    }
-
-    if (btn(button.z) && p.player_stance === player_stance.backhand) {
-      // Make ball be affected by gravity again.
-      p.game.ball.is_kinematic = false
-
-      // Set next state.
-      p.game.next_state = state.serving
-
-      // Set swing state.
-      p.swing_state = swing_state.winding
-    }
-
-    player_move(p)
-    if (p.game.server === p) {
-      player_move_ball(p)
-    }
-    // Move arm afterward, since it depends
-    // on ball's location.
-    player_move_arm(p)
-
+    player_pre_serve(p)
     return
   }
-
-  /**
-   * Serve.
-   */
 
   if (p.game.state === state.serving) {
-    // If we are in a winding state,
-    // increase swing power.
-    // Remember to reset serve power later!
-    if (p.swing_state === swing_state.winding && btn(button.z)) {
-      return
-    }
-
-    if (p.swing_state === swing_state.winding && !btn(button.z)) {
-      p.swing_state = swing_state.idle
-      return
-      // TODO: Swing.
-    }
-
     return
   }
-
-  /**
-   * Rally.
-   */
 
   if (p.game.state === state.rally) {
     return
   }
-
-  /**
-   * Post-rally.
-   */
 
   if (p.game.state === state.post_rally) {
     return
