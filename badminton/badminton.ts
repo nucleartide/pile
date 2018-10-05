@@ -426,7 +426,6 @@ function _init(): void {
 
   const player_user = player(
     c,
-    b,
     -0.5 * meter,
     0,
     5 * meter,
@@ -434,9 +433,7 @@ function _init(): void {
     -1,
     g,
     true,
-    player_side.left,
-    player_human_swing,
-    player_human_wind_up
+    player_side.left
   )
 
   /**
@@ -445,7 +442,6 @@ function _init(): void {
 
   const opponent = player(
     c,
-    b,
     -0.5 * meter,
     0,
     -5 * meter,
@@ -453,9 +449,7 @@ function _init(): void {
     1,
     g,
     false,
-    player_side.right,
-    player_cpu_swing,
-    player_cpu_wind_up
+    player_side.right
   )
 
   /**
@@ -807,18 +801,18 @@ enum player_side {
  * Assume that all players are righties.
  */
 
-enum PlayerStance {
-  Forehand,
-  Backhand,
+enum player_stance {
+  forehand,
+  backhand,
 }
 
 /**
  * Swing state.
  */
 
-enum SwingState {
-  Idle,
-  Winding,
+enum swing_state {
+  idle,
+  winding,
 }
 
 /**
@@ -828,7 +822,6 @@ enum SwingState {
 interface Player extends Actor {
   // Dependencies.
   cam: Camera
-  ball: Ball // Deprecated.
   game: Game
 
   // Position.
@@ -848,33 +841,26 @@ interface Player extends Actor {
   //
   // The sides are kinda arbitrary, but are still named
   // "left" and "right".
+  //
+  // For 1 player, the player is on the "left" side.
   player_side: player_side
 
   // Is the player facing the -z, or z direction?
   player_dir: -1 | 1
 
   // Forehand or backhand?
-  player_stance: PlayerStance
+  player_stance: player_stance
 
   // Swing-related properties.
-  swing_state: SwingState
-  wind_up_condition: (p: Player) => boolean
-  swing2_condition: (p: Player) => boolean
-  swing_power: number
+  swing_state: swing_state
 
-  // Exploratory.
+  // Arm.
   arm_points: [Vec3, Vec3, Vec3]
   arm_screen_points: [Vec3, Vec3, Vec3]
-
-  // Spare vectors.
-  spare: Vec3
-  up: Vec3
-  player_to_ball: Vec3
 }
 
 function player(
   c: Camera,
-  b: Ball,
   x: number,
   y: number,
   z: number,
@@ -883,13 +869,11 @@ function player(
   game: Game,
   is_initial_server: boolean,
   player_side: player_side,
-  swing_condition: (p: Player) => boolean,
-  wind_up_condition: (p: Player) => boolean
 ): Player {
   const points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
   const more_points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
 
-  const p = {
+  const p: Player = {
     pos: vec3(x, y, z),
     vel: vec3(),
     vel60: vec3(),
@@ -897,25 +881,16 @@ function player(
     desired_speed: 10 * meter,
     screen_pos: vec3(),
     cam: c,
-    ball: b,
-    spare: vec3(),
-    up: vec3(0, 1, 0),
-    player_to_ball: vec3(),
-    swing_time: 0,
     input_method: input_method,
     player_dir: player_dir,
-    swing_condition: swing_condition,
     game: game,
     update: player_update,
     draw: player_draw,
     player_side: player_side,
-    player_stance: PlayerStance.Forehand,
-    swing_state: SwingState.Idle,
-    swing2_condition: swing_condition,
-    wind_up_condition: wind_up_condition,
+    player_stance: player_stance.forehand,
+    swing_state: swing_state.idle,
     arm_points: points,
     arm_screen_points: more_points,
-    swing_power: 0,
   }
 
   if (is_initial_server) {
@@ -923,22 +898,6 @@ function player(
   }
 
   return p
-}
-
-function player_human_wind_up(_p: Player): boolean {
-  return false
-}
-
-function player_human_swing(_p: Player): boolean {
-  return false
-}
-
-function player_cpu_wind_up(_p: Player): boolean {
-  return false
-}
-
-function player_cpu_swing(_p: Player): boolean {
-  return false
 }
 
 function player_keyboard_input(p: Player): void {
@@ -983,11 +942,11 @@ function player_move(p: Player): void {
    */
 
   if (p.acc.x > 0) {
-    p.player_stance = PlayerStance.Forehand
+    p.player_stance = player_stance.forehand
   }
 
   if (p.acc.x < 0) {
-    p.player_stance = PlayerStance.Backhand
+    p.player_stance = player_stance.backhand
   }
 
   /**
@@ -1092,11 +1051,11 @@ function player_move_ball(p: Player): void {
    * Place ball on player's forehand or backhand side.
    */
 
-  if (p.player_stance === PlayerStance.Forehand) {
+  if (p.player_stance === player_stance.forehand) {
     p.game.ball.pos.x += 0.5 * meter
   }
 
-  if (p.player_stance === PlayerStance.Backhand) {
+  if (p.player_stance === player_stance.backhand) {
     p.game.ball.pos.x -= 0.5 * meter
   }
 
@@ -1150,7 +1109,7 @@ function player_update(p: Player): void {
       p.game.next_state = state.serving
     }
 
-    if (btn(button.z) && p.player_stance === PlayerStance.Backhand) {
+    if (btn(button.z) && p.player_stance === player_stance.backhand) {
       // Make ball be affected by gravity again.
       p.game.ball.is_kinematic = false
 
@@ -1158,7 +1117,7 @@ function player_update(p: Player): void {
       p.game.next_state = state.serving
 
       // Set swing state.
-      p.swing_state = SwingState.Winding
+      p.swing_state = swing_state.winding
     }
 
     player_move(p)
@@ -1180,13 +1139,12 @@ function player_update(p: Player): void {
     // If we are in a winding state,
     // increase swing power.
     // Remember to reset serve power later!
-    if (p.swing_state === SwingState.Winding && btn(button.z)) {
-      p.swing_power += 1 * (1 / 60)
+    if (p.swing_state === swing_state.winding && btn(button.z)) {
       return
     }
 
-    if (p.swing_state === SwingState.Winding && !btn(button.z)) {
-      p.swing_state = SwingState.Idle
+    if (p.swing_state === swing_state.winding && !btn(button.z)) {
+      p.swing_state = swing_state.idle
       return
       // TODO: Swing.
     }
@@ -1222,9 +1180,6 @@ function player_move_arm(p: Player): void {
 
   // Update racket head point.
   const racket_head = p.arm_points[2]
-  racket_head.x = p.ball.pos.x
-  racket_head.y = p.ball.pos.y
-  racket_head.z = p.ball.pos.z
 
   // Update screen points.
   cam_project(p.cam, p.arm_screen_points[0], socket)
