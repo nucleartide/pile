@@ -346,28 +346,25 @@ function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
  */
 
 const reach_spare = vec3()
-/** !TupleReturn */
 function reach(
   head: Vec3,
   tail: Vec3,
   target: Vec3,
   head_tail_len: number
-): [Vec3, Vec3] {
-  // stretched vec
-  const tail_to_target = vec3_sub(reach_spare, tail, target)
+): void {
+  vec3_sub(reach_spare, tail, target)
   const stretched_len = vec3_magnitude(reach_spare)
 
   // compute scale
   const scale = head_tail_len / stretched_len
 
-  return [
-    { x: target.x, y: target.y, z: target.z },
-    {
-      x: target.x + reach_spare.x * scale,
-      y: target.y + reach_spare.y * scale,
-      z: target.z + reach_spare.z * scale,
-    },
-  ]
+  // set new head
+  vec3_assign(head, target)
+
+  // set new tail
+  vec3_assign(tail, target)
+  vec3_scale(reach_spare, scale)
+  vec3_add(tail, tail, reach_spare)
 }
 
 /**
@@ -1135,32 +1132,11 @@ function player_update(p: Player): void {
       }
       cam_project(p.cam, p.arm_screen_points[2], racket_head)
 
-      const socket = p.arm_screen_points[0]
-      const wrist = p.arm_screen_points[1]
-      // const racket_head = p.arm_screen_points[2]
-
-      let target = racket_head
-      const spare = vec3()
-
-      vec3_sub(spare, racket_head, socket)
-      let [new_head, new_tail] = reach(racket_head, wrist, target, 0.5 * meter)
-      p.arm_points[0] = new_head
-      target = new_tail
-
-      vec3_sub(spare, wrist, socket)
-      let [new_head2, new_tail2] = reach(wrist, socket, wrist, 0.5 * meter)
-      p.arm_points[1] = new_head2
-      target = new_tail2
-
-      p.arm_points[2] = socket
-
       // update screen points.
       for (let i = 0; i < 3; i++) {
         cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
       }
 
-      //print('processed input')
-      //stop()
       return
     }
 
