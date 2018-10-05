@@ -1062,6 +1062,21 @@ function player_move_ball(p: Player): void {
   p.game.ball.pos.z += p.player_dir * 0.1 * meter
 }
 
+function player_move_arm(p: Player): void {
+  // Update socket point.
+  const socket = p.arm_points[0]
+  socket.x = p.pos.x + 0.3 * meter * -p.player_dir
+  socket.y = p.pos.y + 1 * meter
+  socket.z = p.pos.z
+
+  // Update racket head point.
+  const racket_head = p.arm_points[2]
+
+  // Update screen points.
+  cam_project(p.cam, p.arm_screen_points[0], socket)
+  cam_project(p.cam, p.arm_screen_points[2], racket_head)
+}
+
 function player_update(p: Player): void {
   /**
    * Prior to serve.
@@ -1171,21 +1186,6 @@ function player_update(p: Player): void {
   return
 }
 
-function player_move_arm(p: Player): void {
-  // Update socket point.
-  const socket = p.arm_points[0]
-  socket.x = p.pos.x + 0.3 * meter * -p.player_dir
-  socket.y = p.pos.y + 1 * meter
-  socket.z = p.pos.z
-
-  // Update racket head point.
-  const racket_head = p.arm_points[2]
-
-  // Update screen points.
-  cam_project(p.cam, p.arm_screen_points[0], socket)
-  cam_project(p.cam, p.arm_screen_points[2], racket_head)
-}
-
 function player_draw(p: Player): void {
   const width = 10
   const height = 25
@@ -1201,22 +1201,6 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
-
-  //
-  // Draw player arm.
-  //
-
-  // Socket.
-  const socket = p.arm_screen_points[0]
-  circfill(socket.x, socket.y, 1, col.orange)
-
-  // Wrist.
-  const wrist = p.arm_screen_points[1]
-  circfill(wrist.x, wrist.y, 1, col.peach)
-
-  // Racket head.
-  const racket_head = p.arm_screen_points[2]
-  circfill(racket_head.x, racket_head.y, 1, col.pink)
 }
 
 /**
