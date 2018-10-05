@@ -45,6 +45,11 @@
 			{
 				"line": 799,
 				"column": 0,
+				"label": "Player enums."
+			},
+			{
+				"line": 830,
+				"column": 0,
 				"label": "Player entity."
 			},
 			{
