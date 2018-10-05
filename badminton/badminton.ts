@@ -887,18 +887,12 @@ function player(
 }
 
 function player_move(p: Player): void {
-  /**
-   * Compute acceleration.
-   *
-   * Acceleration here is like "desired velocity".
-   */
+  // Compute acceleration.
 
   vec3_zero(p.acc)
   p.input_method(p)
 
-  /**
-   * Compute player stance.
-   */
+  // Compute player stance.
 
   if (p.acc.x > 0) {
     p.player_stance = player_stance.forehand
@@ -908,30 +902,22 @@ function player_move(p: Player): void {
     p.player_stance = player_stance.backhand
   }
 
-  /**
-   * Normalize & scale acceleration.
-   */
+  // Normalize & scale acceleration.
 
   vec3_normalize(p.acc)
   vec3_scale(p.acc, p.desired_speed)
 
-  /**
-   * Update velocity.
-   */
+  // Update velocity.
 
   vec3_lerp(p.vel, p.vel, p.acc, p.desired_speed_lerp_factor)
 
-  /**
-   * Update position.
-   */
+  // Update position.
 
   vec3_assign(p.vel60, p.vel)
   vec3_scale(p.vel60, 1 / 60)
   vec3_add(p.pos, p.pos, p.vel60)
 
-  /**
-   * Bounds checking.
-   */
+  // Bounds checking.
 
   if (p.game.state === state.pre_serve) {
     const [player_score, opponent_score] = get_player_score(p)
@@ -950,9 +936,7 @@ function player_move(p: Player): void {
     }
   }
 
-  /**
-   * Update screen position.
-   */
+  // Update screen position.
 
   cam_project(p.cam, p.screen_pos, p.pos)
 }
