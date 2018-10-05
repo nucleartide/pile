@@ -838,6 +838,9 @@ interface Player extends Actor {
   // Arm.
   arm_points: [Vec3, Vec3, Vec3]
   arm_screen_points: [Vec3, Vec3, Vec3]
+
+  // Temporary target.
+  target: Vec3
 }
 
 function player(
@@ -859,7 +862,7 @@ function player(
     vel: vec3(),
     vel60: vec3(),
     acc: vec3(),
-    desired_speed: 10 * meter,
+    desired_speed: 6.5 * meter,
     desired_speed_lerp_factor: 0.5,
     screen_pos: vec3(),
     cam: c,
@@ -873,6 +876,7 @@ function player(
     swing_state: swing_state.idle,
     arm_points: points,
     arm_screen_points: more_points,
+    target: vec3()
   }
 
   if (is_initial_server) {
@@ -951,6 +955,11 @@ function player_move(p: Player): void {
    */
 
   cam_project(p.cam, p.screen_pos, p.pos)
+}
+
+function player_move_arm(_p: Player): void {
+  // 1. move socket to correct location
+  // 2. reach for target
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1038,7 +1047,25 @@ function player_move_ball(p: Player): void {
 }
 
 function player_pre_serve(p: Player): void {
-  player_move(p)
+  // Update target position.
+  if (btn(button.left)) {
+    p.target.x -= 0.1 * meter
+  }
+  if (btn(button.right)) {
+    p.target.x += 0.1 * meter
+  }
+  if (btn(button.up)) {
+    p.target.y += 0.1 * meter
+  }
+  if (btn(button.down)) {
+    p.target.y -= 0.1 * meter
+  }
+  if (btn(button.z)) {
+    p.target.z -= 0.1 * meter
+  }
+  if (btn(button.x)) {
+    p.target.z += 0.1 * meter
+  }
 }
 
 function player_update(p: Player): void {
@@ -1077,6 +1104,21 @@ function player_draw(p: Player): void {
     round(p.screen_pos.y),
     col.orange
   )
+
+  // Declare some spare vectors.
+  const screen = vec3()
+  const target = vec3()
+
+  // Draw target shadow.
+  vec3_assign(target, p.target)
+  target.y = 0
+  cam_project(p.cam, screen, target)
+  circfill(screen.x, screen.y, 2, col.dark_blue)
+
+  // Draw target.
+  vec3_assign(target, p.target)
+  cam_project(p.cam, screen, target)
+  circfill(screen.x, screen.y, 2, col.green)
 }
 
 /**
