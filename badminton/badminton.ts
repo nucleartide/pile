@@ -941,16 +941,24 @@ function player_move(p: Player): void {
   cam_project(p.cam, p.screen_pos, p.pos)
 }
 
+const socket_spare = vec3()
 function player_move_arm(p: Player): void {
   const socket = p.arm_points[0]
   const wrist = p.arm_points[1]
   const racket_head = p.arm_points[2]
 
+  // Save socket location.
+  vec3_assign(socket_spare, socket)
+
+  // Reach for target.
   reach(racket_head, wrist, p.target, 1 * meter)
   reach(wrist, socket, wrist, 1 * meter)
 
-  // TODO: Reverse reach for socket constraint.
+  // Reverse reach for socket constraint.
+  reach(socket, wrist, socket_spare, 1 * meter)
+  reach(wrist, racket_head, wrist, 1 * meter)
 
+  // Update screen coordinates.
   const len = p.arm_points.length
   for (let i = 0; i < len; i++) {
     cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
@@ -1118,12 +1126,22 @@ function player_draw(p: Player): void {
   cam_project(p.cam, screen, target)
   circfill(screen.x, screen.y, 2, col.green)
 
-  // Draw arm.
+  // Declare vars for arm joints.
+  const socket = p.arm_screen_points[0]
+  const wrist = p.arm_screen_points[1]
+  const racket_head = p.arm_screen_points[2]
+
+  // Draw arm joints.
   const len = p.arm_screen_points.length
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < len - 1; i++) {
     const point = p.arm_screen_points[i]
     circfill(point.x, point.y, 1, col.peach)
   }
+  circfill(racket_head.x, racket_head.y, 3, col.white)
+
+  // Draw lines between arm joints.
+  line(socket.x, socket.y, wrist.x, wrist.y, col.peach)
+  line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
 }
 
 /**
