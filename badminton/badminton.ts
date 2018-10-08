@@ -941,9 +941,20 @@ function player_move(p: Player): void {
   cam_project(p.cam, p.screen_pos, p.pos)
 }
 
-function player_move_arm(_p: Player): void {
-  // 1. move socket to correct location
-  // 2. reach for target
+function player_move_arm(p: Player): void {
+  const socket = p.arm_points[0]
+  const wrist = p.arm_points[1]
+  const racket_head = p.arm_points[2]
+
+  reach(racket_head, wrist, p.target, 1 * meter)
+  reach(wrist, socket, wrist, 1 * meter)
+
+  // TODO: Reverse reach for socket constraint.
+
+  const len = p.arm_points.length
+  for (let i = 0; i < len; i++) {
+    cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
+  }
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1050,6 +1061,9 @@ function player_pre_serve(p: Player): void {
   if (btn(button.x)) {
     p.target.z += 0.1 * meter
   }
+
+  // Move the arm.
+  player_move_arm(p)
 }
 
 function player_update(p: Player): void {
@@ -1103,6 +1117,13 @@ function player_draw(p: Player): void {
   vec3_assign(target, p.target)
   cam_project(p.cam, screen, target)
   circfill(screen.x, screen.y, 2, col.green)
+
+  // Draw arm.
+  const len = p.arm_screen_points.length
+  for (let i = 0; i < len; i++) {
+    const point = p.arm_screen_points[i]
+    circfill(point.x, point.y, 1, col.peach)
+  }
 }
 
 /**
