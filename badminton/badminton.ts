@@ -507,6 +507,9 @@ function _draw(): void {
   // Draw game last.
   const game = actors_obj.game
   game.draw(game)
+
+  // print cpu
+  print(stat(1), 0, 0)
 }
 
 /**
