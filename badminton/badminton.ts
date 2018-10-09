@@ -964,12 +964,17 @@ function player_move_arm(p: Player): void {
   // Save socket location.
   vec3_assign(socket_spare, socket)
 
+  // arm & racket length
+  // these lengths need to be different to avoid jittering
+  const arm_len = 0.75 * meter
+  const racket_len = 0.67 * meter
+
   // Reach for target.
-  reach(racket_head, wrist, p.target, 1 * meter)
+  reach(racket_head, wrist, p.target, racket_len)
 
   // Reverse reach for socket constraint.
-  reach(socket, wrist, socket_spare, 1 * meter, true)
-  reach(wrist, racket_head, wrist, 1 * meter)
+  reach(socket, wrist, socket_spare, arm_len, true)
+  reach(wrist, racket_head, wrist, racket_len)
 
   // Update screen coordinates.
   const len = p.arm_points.length
