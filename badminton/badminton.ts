@@ -350,10 +350,24 @@ function reach(
   head: Vec3,
   tail: Vec3,
   target: Vec3,
-  head_tail_len: number
+  head_tail_len: number,
+  constrain?: boolean
 ): void {
+  // get stretched length
   vec3_sub(reach_spare, tail, target)
   const stretched_len = vec3_magnitude(reach_spare)
+
+  // avoid division by zero
+  if (stretched_len === 0) {
+    return
+  }
+
+  // constrain head tail length if necessary
+  if (constrain) {
+    const len = vec3_dist(head, tail)
+    head_tail_len = min(head_tail_len, len)
+    head_tail_len = max(head_tail_len, 0.1 * meter)
+  }
 
   // compute scale
   const scale = head_tail_len / stretched_len
@@ -952,10 +966,9 @@ function player_move_arm(p: Player): void {
 
   // Reach for target.
   reach(racket_head, wrist, p.target, 1 * meter)
-  reach(wrist, socket, wrist, 1 * meter)
 
   // Reverse reach for socket constraint.
-  reach(socket, wrist, socket_spare, 1 * meter)
+  reach(socket, wrist, socket_spare, 1 * meter, true)
   reach(wrist, racket_head, wrist, 1 * meter)
 
   // Update screen coordinates.
@@ -1127,7 +1140,6 @@ function player_draw(p: Player): void {
   circfill(screen.x, screen.y, 2, col.green)
 
   // Declare vars for arm joints.
-  const socket = p.arm_screen_points[0]
   const wrist = p.arm_screen_points[1]
   const racket_head = p.arm_screen_points[2]
 
@@ -1140,7 +1152,6 @@ function player_draw(p: Player): void {
   circfill(racket_head.x, racket_head.y, 3, col.white)
 
   // Draw lines between arm joints.
-  line(socket.x, socket.y, wrist.x, wrist.y, col.peach)
   line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
 }
 
