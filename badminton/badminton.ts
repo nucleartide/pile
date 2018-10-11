@@ -351,7 +351,7 @@ function reach(
   tail: Vec3,
   target: Vec3,
   head_tail_len: number,
-  constrain?: boolean
+  constrain?: boolean // if true, head_tail_len is treated as a max
 ): void {
   // get stretched length
   vec3_sub(reach_spare, tail, target)
