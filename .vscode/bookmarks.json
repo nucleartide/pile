@@ -98,5 +98,40 @@
 				"label": "Court entity."
 			}
 		]
+	},
+	{
+		"path": "$ROOTPATH$/carts/constraints.p8",
+		"bookmarks": [
+			{
+				"line": 4,
+				"column": 0,
+				"label": "Game loop."
+			},
+			{
+				"line": 60,
+				"column": 0,
+				"label": "Entity: joint & arm."
+			},
+			{
+				"line": 81,
+				"column": 0,
+				"label": "Utils: math."
+			},
+			{
+				"line": 124,
+				"column": 0,
+				"label": "Algo: reach."
+			},
+			{
+				"line": 219,
+				"column": 0,
+				"label": "Algo: reach arm."
+			},
+			{
+				"line": 257,
+				"column": 0,
+				"label": "Last line."
+			}
+		]
 	}
 ]

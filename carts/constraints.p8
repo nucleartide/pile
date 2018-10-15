@@ -1,121 +1,260 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-function joint(x,y,a,b)
- return {
-  x=x,
-  y=y,
-  a=a,
-  b=b,
- }
+
+--
+-- game loop.
+--
+
+function _init()
+  -- enable mouse
+  poke(0x5f2d, 1)
+
+  -- make mouse
+  mouse = {
+    x = 20,
+    y = 30,
+  }
+
+  -- make arm
+  arm = make_arm()
 end
 
-arm={
- joint(20,20,0.625,0.875),
- joint(30,30,0.625,0.875),
- joint(20,40,0.625,0.875),
- joint(10,50,0.625,0.875),
-}
-
-mouse={x=20,y=30}
-
--- enable mouse
-poke(0x5f2d, 1)
-
 function _update60()
- -- update mouse
- mouse.x = stat(32)
- mouse.y = stat(33)
+  -- update mouse
+  mouse.x = stat(32)
+  mouse.y = stat(33)
 
- -- update arm
- local head=arm[4]
- local tail=arm[3]
- local tar =mouse
- reach(head,tail,tar)
-
- head=arm[3]
- tail=arm[2]
- tar=arm[3]
- reach(head,tail,tar)
- 
- head=arm[2]
- tail=arm[1]
- tar=arm[2]
- reach(head,tail,tar)
- 
- -- backward
- head=arm[1]
- tail=arm[2]
- tar={x=64,y=64}
- reach(head,tail,tar)
- 
- head=arm[2]
- tail=arm[3]
- tar=head
- reach(head,tail,tar)
- 
- head=arm[3]
- tail=arm[4]
- tar=head
- reach(head,tail,tar)
+  -- reach
+  reach_arm(arm)
 end
 
 function _draw()
- cls(2)
- 
- -- draw arm lines
- for i=1,#arm-1 do
-  local p1=arm[i]
-  local p2=arm[i+1]
-  line(
-   p1.x,p1.y,
-   p2.x,p2.y,
-   7
+  cls(2)
+
+  -- draw arm lines
+  for i=1,#arm-1 do
+   local p1=arm[i]
+   local p2=arm[i+1]
+   line(
+    p1.x,p1.y,
+    p2.x,p2.y,
+    7
+   )
+  end
+
+  -- draw arm
+  for i=1,#arm do
+   local p=arm[i]
+   circfill(p.x,p.y,2,7)
+  end
+
+  -- draw target
+  circfill(
+   mouse.x,
+   mouse.y,
+   2,
+   11
   )
- end
- 
- -- draw arm
- for i=1,#arm do
-  local p=arm[i]
-  circfill(p.x,p.y,2,7)
- end
- 
- -- draw target
- circfill(
-  mouse.x,
-  mouse.y,
-  2,
-  11
- )
 end
 
-function dist(v1,v2)
- local x = v2.x-v1.x
- local y = v2.y-v1.y
- return sqrt(x*x + y*y)
+--
+-- joint & arm.
+--
+
+function make_joint(x,y)
+  return {
+    x=x,
+    y=y,
+  }
 end
 
-function reach(
- head,
- tail,
- target
-)
- local head_tail_len=
-  20
-  
- local tail_tar_len=
-  dist(tail,target)
+function make_arm()
+  local a=make_joint(20, 30) -- socket
+  local b=make_joint(30, 30) -- elbow
+  local c=make_joint(20, 40) -- wrist
+  local d=make_joint(10, 50) -- racket head
+  b.limits={a=-0.125,b=0.125}
+  c.limits={a=-0.125,b=0.125}
+  return {a,b,c,d}
+end
 
- local scale=
-  head_tail_len/tail_tar_len
+--
+-- math utils.
+--
 
- -- set head
- head.x=target.x
- head.y=target.y
+function dot(a, b)
+  return a.x * b.x + a.y * b.y
+end
 
- -- set tail
- tail.x=target.x+(tail.x-target.x)*scale
- tail.y=target.y+(tail.y-target.y)*scale
+function dist(v1, v2)
+  local x = v2.x - v1.x
+  local y = v2.y - v1.y
+  return sqrt(x*x + y*y)
+end
+
+function mag(v)
+  return sqrt(v.x*v.x + v.y*v.y)
+end
+
+function cross(a,b)
+  return {
+    x = a.y * b.z - a.z * b.y,
+    y = a.z * b.x - a.x * b.z,
+    z = a.x * b.y - a.y * b.x,
+  }
+end
+
+function vector_project(a, b)
+  local d = dot(a, b)
+  local m = mag(b)
+  local s = d/(m*m)
+  return {
+    x=b.x*s,
+    y=b.y*s,
+  }
+end
+
+-- note: pass in 3d vectors.
+function is_same_side_util(v1, v2, comparison_vec)
+  local a = cross(v1, comparison_vec)
+  local b = cross(v2, comparison_vec)
+  return a.z == b.z
+end
+
+--
+-- reach.
+--
+
+-- `prev_head` - optional
+-- `is_forward_reach` - optional
+function reach(head, tail, target, prev_head, is_forward_reach)
+  local head_tail_len = 20
+
+  local tail_target_len = dist(tail, target)
+
+  local scale = head_tail_len / tail_target_len
+
+  -- set head
+  head.x = target.x
+  head.y = target.y
+
+  -- set tail
+  tail.x = target.x + (tail.x-target.x)*scale
+  tail.y = target.y + (tail.y-target.y)*scale
+
+  -- if no previous joint,
+  -- then we don't need to apply angular limits
+  if not prev_head then return end
+
+  -- 1. find perpendicular line.
+  local x=prev_head.x-head.x
+  local y=prev_head.y-head.y
+  local perp=cross({x=0,y=0,z=1},{x=x,y=y,z=0})
+
+  -- 2. determine whether `prev_head` and `tail` lie on same side.
+  local is_same_side = false
+  do
+    local a = cross(
+      {x=prev_head.x,y=prev_head.y,z=0},
+      perp
+    ).z
+    local b = cross(
+      {x=tail.x,y=tail.y,z=0},
+      perp
+    ).z
+    is_same_side = a == b
+  end
+
+  -- 3. compute projection vector using `is_same_side`.
+  local sign = is_same_side and 1 or -1
+  local proj=vector_project(
+    {x=tail.x-head.x,y=tail.y-head.y},
+    {x=sign*x,y=sign*y}
+  )
+
+  -- 4. figure out angle using `atan2`.
+  local o
+  do
+    local is_same_side = is_same_side_util(
+      {x=perp.x,y=perp.y,z=0},
+      {x=tail.x-head.x,y=tail.y-head.y,z=0},
+      {x=x,y=y,z=0}
+    )
+    local sign=is_same_side and -1 or 1 -- negate for y axis
+    o=sign*mag({
+      x=tail.x-proj.x,
+      y=tail.y-proj.y
+    })
+  end
+  local a=mag(proj)*sign -- use sign from above
+  local angle=atan2(a,o)
+
+  -- 5. normalize angle.
+  local normalized_angle = angle
+  if not (angle >= -0.5 && angle < 0.5) then
+    normalized_angle = angle - 0.5
+  end
+
+  -- 6. check if normalized angle is in range.
+  local in_range
+  if is_forward_reach then
+    in_range = angle >= -head.limits.b and angle <= -head.limits.a
+  else
+    in_range = angle >= head.limits.a and angle <= head.limits.b
+  end
+
+  -- 7a. if in range, great!
+  if in_range then return end
+
+  -- 7b. else, find the closest angle.
+  local start_limit=is_forward_reach and -head.limits.b or -head.limits.a
+  local end_limit=is_forward_reach and head-limits.a or head.limits.b
+  local closest_angle=min(abs(angle-start_limit), abs(angle-end_limit))
+
+  -- 8. add angle between x axis and head->prev_head vector.
+
+  -- 9. compute new point of tail.
+end
+
+--
+-- reach arm.
+--
+
+function reach_arm(arm)
+  local anchor={x=64,y=64}
+
+  -- forward
+  local head=arm[4]
+  local tail=arm[3]
+  local tar =mouse
+  reach(head,tail,tar)
+
+  head=arm[3]
+  tail=arm[2]
+  tar=arm[3]
+  reach(head,tail,tar,arm[4])
+
+  head=arm[2]
+  tail=arm[1]
+  tar=arm[2]
+  reach(head,tail,tar)
+
+  -- backward
+  head=arm[1]
+  tail=arm[2]
+  tar=anchor
+  reach(head,tail,tar)
+
+  head=arm[2]
+  tail=arm[3]
+  tar=head
+  reach(head,tail,tar)
+
+  head=arm[3]
+  tail=arm[4]
+  tar=head
+  reach(head,tail,tar)
 end
 __map__
 00000c00c84c12000000000032332800c84c120000000000ceccd7ff00000600c84c120000000000ceccd7ff38b3edff00000000ceccd7ff0000060038b3edff00000000ceccd7ff38b3edff00000000323328000000060038b3edff0000000032332800c84c12000000000032332800000006003c8a0f0000000000ceccd7ff
