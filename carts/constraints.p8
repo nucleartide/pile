@@ -192,7 +192,7 @@ function reach(head, tail, target, prev_head, is_forward_reach)
 
   -- 5. normalize angle.
   local normalized_angle = angle
-  if not (angle >= -0.5 && angle < 0.5) then
+  if not (angle >= -0.5 and angle < 0.5) then
     normalized_angle = angle - 0.5
   end
 
