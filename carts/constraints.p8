@@ -20,7 +20,14 @@ function _init()
   arm = make_arm()
 end
 
+local anchor={x=64,y=64}
 function _update60()
+  -- update anchor pos
+  if (btn(0)) anchor.x -= 1
+  if (btn(1)) anchor.x += 1
+  if (btn(2)) anchor.y -= 1
+  if (btn(3)) anchor.y += 1
+
   -- update mouse
   mouse.x = stat(32)
   mouse.y = stat(33)
@@ -74,8 +81,10 @@ function make_arm()
   local b=make_joint(30, 30) -- elbow
   local c=make_joint(20, 40) -- wrist
   local d=make_joint(10, 50) -- racket head
-  b.limits={a=-0.125,b=0.125}
-  c.limits={a=-0.125,b=0.125}
+  -- limits must be positive
+  a.limits={a=0.625,b=0.375}
+  b.limits={a=0.5,b=0.875}
+  c.limits={a=0.65,b=0.85}
   return {a,b,c,d}
 end
 
@@ -132,8 +141,8 @@ end
 
 -- `prev_head` - optional
 -- `is_forward_reach` - optional
-function reach(head, tail, target, prev_head, is_forward_reach)
-  local head_tail_len = 20
+function reach(head, tail, target, head_tail_len, prev_head)
+  local head_tail_len = head_tail_len
 
   local tail_target_len = dist(tail, target)
 
@@ -192,9 +201,16 @@ function reach(head, tail, target, prev_head, is_forward_reach)
   local angle=atan2(a,o)
 
   -- 6. check if normalized angle is in range.
-  local in_range = true
-    and head.limits.a <= angle
-    and angle         <= head.limits.b
+  local in_range
+  if head.limits.a < head.limits.b then
+    in_range = true
+      and head.limits.a <= angle
+      and angle         <= head.limits.b
+  else
+    in_range = false
+      or angle <= head.limits.b
+      or head.limits.a <= angle
+  end
 
   -- 7a. if in range, great!
   if in_range then return end
@@ -217,8 +233,8 @@ end
 -- return 0 for a, 1 for b
 function closest_angle(a,b,angle)
   assert(a != b)
-  local diffa = abs(angle-a)
-  local diffb = abs(angle-b)
+  local diffa = min(abs(angle-a), abs(angle-a+1))
+  local diffb = min(abs(angle-b), abs(angle-b+1))
   if (diffa <= diffb) return 0
   return 1
 end
@@ -228,23 +244,41 @@ end
 --
 
 function reach_arm(arm)
-  local anchor={x=64,y=64}
   local head
   local tail
   local tar
 
   -- backward
+  head=arm[4]
+  tail=arm[3]
+  tar=mouse
+  reach(head,tail,tar,30)
+
+  head=arm[3]
+  tail=arm[2]
+  tar=head
+  reach(head,tail,tar,20)
+
   head=arm[2]
   tail=arm[1]
-  tar=mouse
-  reach(head,tail,tar)
+  tar=head
+  reach(head,tail,tar,20)
 
   -- forward
   head=arm[1]
   tail=arm[2]
   tar=anchor
-  head.limits={a=0.375,b=0.625}
-  reach(head,tail,tar,{x=128,y=64,z=0})
+  reach(head,tail,tar,20,{x=128,y=64,z=0})
+
+  head=arm[2]
+  tail=arm[3]
+  tar=head
+  reach(head,tail,tar,20,arm[1])
+
+  head=arm[3]
+  tail=arm[4]
+  tar=head
+  reach(head,tail,tar,30)
 end
 __map__
 00000c00c84c12000000000032332800c84c120000000000ceccd7ff00000600c84c120000000000ceccd7ff38b3edff00000000ceccd7ff0000060038b3edff00000000ceccd7ff38b3edff00000000323328000000060038b3edff0000000032332800c84c12000000000032332800000006003c8a0f0000000000ceccd7ff
