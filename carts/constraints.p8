@@ -119,12 +119,16 @@ end
 function is_same_side_util(v1, v2, comparison_vec)
   local a = cross(v1, comparison_vec)
   local b = cross(v2, comparison_vec)
-  return a.z == b.z
+  return sgn(a.z) == sgn(b.z)
 end
 
 --
 -- reach.
 --
+
+function vec3_print(v)
+  print(v.x .. ',' .. v.y .. ',' .. v.z)
+end
 
 -- `prev_head` - optional
 -- `is_forward_reach` - optional
@@ -150,21 +154,17 @@ function reach(head, tail, target, prev_head, is_forward_reach)
   -- 1. find perpendicular line.
   local x=prev_head.x-head.x
   local y=prev_head.y-head.y
-  local perp=cross({x=0,y=0,z=1},{x=x,y=y,z=0})
+  local perp=cross({x=0,y=0,z=-1},{x=x,y=y,z=0})
 
   -- 2. determine whether `prev_head` and `tail` lie on same side.
-  local is_same_side = false
-  do
-    local a = cross(
-      {x=prev_head.x,y=prev_head.y,z=0},
-      perp
-    ).z
-    local b = cross(
-      {x=tail.x,y=tail.y,z=0},
-      perp
-    ).z
-    is_same_side = a == b
-  end
+  -- vec3_print({x=tail.x-head.x,y=tail.y-head.y,z=0})
+  -- vec3_print({x=prev_head.x-head.x,y=prev_head.y-head.y,z=0})
+  -- vec3_print(perp)
+  local is_same_side = is_same_side_util(
+    {x=tail.x-head.x,y=tail.y-head.y,z=0},
+    {x=prev_head.x-head.x,y=prev_head.y-head.y,z=0},
+    perp
+  )
 
   -- 3. compute projection vector using `is_same_side`.
   local sign = is_same_side and 1 or -1
@@ -183,38 +183,44 @@ function reach(head, tail, target, prev_head, is_forward_reach)
     )
     local sign=is_same_side and -1 or 1 -- negate for y axis
     o=sign*mag({
-      x=tail.x-proj.x,
-      y=tail.y-proj.y
+      x=(tail.x-head.x)-proj.x,
+      y=(tail.y-head.y)-proj.y
     })
   end
+
   local a=mag(proj)*sign -- use sign from above
   local angle=atan2(a,o)
 
-  -- 5. normalize angle.
-  local normalized_angle = angle
-  if not (angle >= -0.5 and angle < 0.5) then
-    normalized_angle = angle - 0.5
-  end
-
   -- 6. check if normalized angle is in range.
-  local in_range
-  if is_forward_reach then
-    in_range = angle >= -head.limits.b and angle <= -head.limits.a
-  else
-    in_range = angle >= head.limits.a and angle <= head.limits.b
-  end
+  local in_range = true
+    and head.limits.a <= angle
+    and angle         <= head.limits.b
 
   -- 7a. if in range, great!
   if in_range then return end
 
   -- 7b. else, find the closest angle.
-  local start_limit=is_forward_reach and -head.limits.b or -head.limits.a
-  local end_limit=is_forward_reach and head-limits.a or head.limits.b
-  local closest_angle=min(abs(angle-start_limit), abs(angle-end_limit))
+  local start_limit=head.limits.a
+  local end_limit=head.limits.b
+  local closest=closest_angle(start_limit,end_limit,angle)
+  local closest_a = closest == 0 and start_limit or end_limit
 
   -- 8. add angle between x axis and head->prev_head vector.
+  local additional_angle = atan2(x, y)
+  local final_angle = closest_a + additional_angle
 
   -- 9. compute new point of tail.
+  tail.x = head.x + head_tail_len * cos(final_angle)
+  tail.y = head.y + head_tail_len * sin(final_angle)
+end
+
+-- return 0 for a, 1 for b
+function closest_angle(a,b,angle)
+  assert(a != b)
+  local diffa = abs(angle-a)
+  local diffb = abs(angle-b)
+  if (diffa <= diffb) return 0
+  return 1
 end
 
 --
@@ -223,38 +229,22 @@ end
 
 function reach_arm(arm)
   local anchor={x=64,y=64}
-
-  -- forward
-  local head=arm[4]
-  local tail=arm[3]
-  local tar =mouse
-  reach(head,tail,tar)
-
-  head=arm[3]
-  tail=arm[2]
-  tar=arm[3]
-  reach(head,tail,tar,arm[4])
-
-  head=arm[2]
-  tail=arm[1]
-  tar=arm[2]
-  reach(head,tail,tar)
+  local head
+  local tail
+  local tar
 
   -- backward
+  head=arm[2]
+  tail=arm[1]
+  tar=mouse
+  reach(head,tail,tar)
+
+  -- forward
   head=arm[1]
   tail=arm[2]
   tar=anchor
-  reach(head,tail,tar)
-
-  head=arm[2]
-  tail=arm[3]
-  tar=head
-  reach(head,tail,tar)
-
-  head=arm[3]
-  tail=arm[4]
-  tar=head
-  reach(head,tail,tar)
+  head.limits={a=0.375,b=0.625}
+  reach(head,tail,tar,{x=128,y=64,z=0})
 end
 __map__
 00000c00c84c12000000000032332800c84c120000000000ceccd7ff00000600c84c120000000000ceccd7ff38b3edff00000000ceccd7ff0000060038b3edff00000000ceccd7ff38b3edff00000000323328000000060038b3edff0000000032332800c84c12000000000032332800000006003c8a0f0000000000ceccd7ff
