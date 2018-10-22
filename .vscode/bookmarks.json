@@ -63,74 +63,39 @@
 				"label": "Player movement, arm."
 			},
 			{
-				"line": 988,
+				"line": 990,
 				"column": 0,
 				"label": "Player methods."
 			},
 			{
-				"line": 1072,
+				"line": 1074,
 				"column": 0,
 				"label": "Player pre-serve state."
 			},
 			{
-				"line": 1097,
+				"line": 1099,
 				"column": 0,
 				"label": "Player update."
 			},
 			{
-				"line": 1118,
+				"line": 1120,
 				"column": 0,
 				"label": "Player draw."
 			},
 			{
-				"line": 1165,
+				"line": 1167,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1290,
+				"line": 1292,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1364,
+				"line": 1366,
 				"column": 0,
 				"label": "Court entity."
-			}
-		]
-	},
-	{
-		"path": "$ROOTPATH$/carts/constraints.p8",
-		"bookmarks": [
-			{
-				"line": 4,
-				"column": 0,
-				"label": "Game loop."
-			},
-			{
-				"line": 67,
-				"column": 0,
-				"label": "Entity: joint & arm."
-			},
-			{
-				"line": 90,
-				"column": 0,
-				"label": "Utils: math."
-			},
-			{
-				"line": 133,
-				"column": 0,
-				"label": "Algo: reach."
-			},
-			{
-				"line": 241,
-				"column": 0,
-				"label": "Algo: reach arm."
-			},
-			{
-				"line": 281,
-				"column": 0,
-				"label": "Last line."
 			}
 		]
 	}

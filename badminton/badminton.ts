@@ -853,8 +853,8 @@ interface Player extends Actor {
   swing_state: swing_state
 
   // Arm.
-  arm_points: [Vec3, Vec3, Vec3]
-  arm_screen_points: [Vec3, Vec3, Vec3]
+  arm_points: [Vec3, Vec3, Vec3, Vec3]
+  arm_screen_points: [Vec3, Vec3, Vec3, Vec3]
 
   // Temporary target.
   target: Vec3
@@ -871,8 +871,8 @@ function player(
   is_initial_server: boolean,
   player_side: player_side,
 ): Player {
-  const points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
-  const more_points: [Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3()]
+  const points: [Vec3, Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3(), vec3()]
+  const more_points: [Vec3, Vec3, Vec3, Vec3] = [vec3(), vec3(), vec3(), vec3()]
 
   const p: Player = {
     pos: vec3(x, y, z),
@@ -960,6 +960,8 @@ function player_move(p: Player): void {
 
 const socket_spare = vec3()
 function player_move_arm(p: Player): void {
+  // TODO: Add 4th point movement.
+
   const socket = p.arm_points[0]
   const wrist = p.arm_points[1]
   const racket_head = p.arm_points[2]

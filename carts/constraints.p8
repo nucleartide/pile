@@ -40,15 +40,15 @@ function _draw()
   cls(2)
 
   -- draw arm lines
-  for i=1,#arm-1 do
-   local p1=arm[i]
-   local p2=arm[i+1]
+  --for i=1,#arm-1 do
+   local p1=arm[3]
+   local p2=arm[4]
    line(
     p1.x,p1.y,
     p2.x,p2.y,
     7
    )
-  end
+  --end
 
   -- draw arm
   for i=1,#arm do
@@ -83,8 +83,11 @@ function make_arm()
   local d=make_joint(10, 50) -- racket head
   -- limits must be positive
   a.limits={a=0.625,b=0.375}
-  b.limits={a=0.5,b=0.875}
-  c.limits={a=0.65,b=0.85}
+  b.limits={a=0.3,b=0.925}
+  c.limits={a=0.5,b=0.99}
+  a.in_range=false
+  b.in_range=false
+  c.in_range=false
   return {a,b,c,d}
 end
 
@@ -213,7 +216,9 @@ function reach(head, tail, target, head_tail_len, prev_head)
   end
 
   -- 7a. if in range, great!
-  if in_range then return end
+  if in_range then
+    return
+  end
 
   -- 7b. else, find the closest angle.
   local start_limit=head.limits.a
@@ -252,33 +257,33 @@ function reach_arm(arm)
   head=arm[4]
   tail=arm[3]
   tar=mouse
-  reach(head,tail,tar,30)
+  reach(head,tail,tar,20)
 
   head=arm[3]
   tail=arm[2]
   tar=head
-  reach(head,tail,tar,20)
+  reach(head,tail,tar,15)
 
   head=arm[2]
   tail=arm[1]
   tar=head
-  reach(head,tail,tar,20)
+  reach(head,tail,tar,15)
 
   -- forward
   head=arm[1]
   tail=arm[2]
   tar=anchor
-  reach(head,tail,tar,20,{x=128,y=64,z=0})
+  reach(head,tail,tar,15,{x=128,y=64,z=0})
 
   head=arm[2]
   tail=arm[3]
   tar=head
-  reach(head,tail,tar,20,arm[1])
+  reach(head,tail,tar,15,arm[1])
 
   head=arm[3]
   tail=arm[4]
   tar=head
-  reach(head,tail,tar,30)
+  reach(head,tail,tar,20,arm[2])
 end
 __map__
 00000c00c84c12000000000032332800c84c120000000000ceccd7ff00000600c84c120000000000ceccd7ff38b3edff00000000ceccd7ff0000060038b3edff00000000ceccd7ff38b3edff00000000323328000000060038b3edff0000000032332800c84c12000000000032332800000006003c8a0f0000000000ceccd7ff
