@@ -956,6 +956,11 @@ function player_move(p: Player): void {
   // Update screen position.
 
   cam_project(p.cam, p.screen_pos, p.pos)
+
+  // Update chest position.
+
+  vec3_assign(p.arm_points[0], p.pos)
+  p.arm_points[0].y = 1 * meter
 }
 
 const chest_spare = vec3()
@@ -1075,25 +1080,8 @@ function player_move_ball(p: Player): void {
 }
 
 function player_pre_serve(p: Player): void {
-  // Update target position.
-  if (btn(button.left)) {
-    p.target.x -= 0.1 * meter
-  }
-  if (btn(button.right)) {
-    p.target.x += 0.1 * meter
-  }
-  if (btn(button.up)) {
-    p.target.y += 0.1 * meter
-  }
-  if (btn(button.down)) {
-    p.target.y -= 0.1 * meter
-  }
-  if (btn(button.z)) {
-    p.target.z -= 0.1 * meter
-  }
-  if (btn(button.x)) {
-    p.target.z += 0.1 * meter
-  }
+  // Move player.
+  player_move(p)
 
   // Move the arm.
   player_move_arm(p)
