@@ -958,27 +958,29 @@ function player_move(p: Player): void {
   cam_project(p.cam, p.screen_pos, p.pos)
 }
 
-const socket_spare = vec3()
+const chest_spare = vec3()
 function player_move_arm(p: Player): void {
-  // TODO: Add 4th point movement.
+  const chest = p.arm_points[0]
+  const socket = p.arm_points[1]
+  const wrist = p.arm_points[2]
+  const racket_head = p.arm_points[3]
 
-  const socket = p.arm_points[0]
-  const wrist = p.arm_points[1]
-  const racket_head = p.arm_points[2]
+  // Save chest location. This will be the anchor.
+  vec3_assign(chest_spare, chest)
 
-  // Save socket location.
-  vec3_assign(socket_spare, socket)
-
-  // arm & racket length
-  // these lengths need to be different to avoid jittering
+  // Lengths.
+  const chest_socket_len = 0.25 * meter
   const arm_len = 0.75 * meter
   const racket_len = 0.67 * meter
 
   // Reach for target.
   reach(racket_head, wrist, p.target, racket_len)
+  reach(wrist, socket, wrist, arm_len, true)
+  reach(socket, chest, socket, chest_socket_len)
 
-  // Reverse reach for socket constraint.
-  reach(socket, wrist, socket_spare, arm_len, true)
+  // Reverse reach for chest anchor.
+  reach(chest, socket, chest_spare, chest_socket_len)
+  reach(socket, wrist, socket, arm_len, true)
   reach(wrist, racket_head, wrist, racket_len)
 
   // Update screen coordinates.
@@ -1150,8 +1152,8 @@ function player_draw(p: Player): void {
   circfill(screen.x, screen.y, 2, col.green)
 
   // Declare vars for arm joints.
-  const wrist = p.arm_screen_points[1]
-  const racket_head = p.arm_screen_points[2]
+  const wrist = p.arm_screen_points[2]
+  const racket_head = p.arm_screen_points[3]
 
   // Draw arm joints.
   const len = p.arm_screen_points.length
