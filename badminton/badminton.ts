@@ -1153,6 +1153,9 @@ function player_draw(p: Player): void {
 
   // Draw lines between arm joints.
   line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
+
+  // Print distance to ball.
+  print('dist to ball: ' + (vec3_dist(p.target, p.pos) / meter))
 }
 
 /**
