@@ -341,6 +341,26 @@ function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
   add(order, [pos, a])
 }
 
+type OrderObjArray = Array<[Vec3, Object]>
+
+function insert_into2(order: OrderObjArray, pos: Vec3, a: Function): void {
+  for (let i = 0; i < order.length; i++) {
+    const current = order[i]
+    if (pos.z < current[0].z) {
+      // Move everything 1 over.
+      for (let j = order.length - 1; j >= i; j--) {
+        order[j + 1] = order[j]
+      }
+
+      // Insert.
+      order[i] = [pos, a]
+      return
+    }
+  }
+
+  add(order, [pos, a])
+}
+
 /**
  * Reach.
  */
@@ -964,6 +984,7 @@ function player_move(p: Player): void {
 }
 
 const chest_spare = vec3()
+const target_spare = vec3()
 function player_move_arm(p: Player): void {
   const chest = p.arm_points[0]
   const socket = p.arm_points[1]
@@ -978,8 +999,22 @@ function player_move_arm(p: Player): void {
   const arm_len = 0.75 * meter
   const racket_len = 0.67 * meter
 
+  // Compute distance to target.
+  const dist_to_target = vec3_dist(p.target, p.pos) / meter
+
+  // Choose target.
+  let target
+  if (dist_to_target < 0.5 * meter) {
+    target = p.target
+  } else {
+    target = target_spare
+    target_spare.x = p.pos.x
+    target_spare.y = p.pos.y + 0.75 * meter
+    target_spare.z = p.pos.z + p.player_dir * 0.25 * meter
+  }
+
   // Reach for target.
-  reach(racket_head, wrist, p.target, racket_len)
+  reach(racket_head, wrist, target, racket_len)
   reach(wrist, socket, wrist, arm_len, true)
   reach(socket, chest, socket, chest_socket_len)
 
@@ -1143,16 +1178,31 @@ function player_draw(p: Player): void {
   const wrist = p.arm_screen_points[2]
   const racket_head = p.arm_screen_points[3]
 
+  // Do z-sorting.
+  const orderArray: Array<[Vec3, Object]> = []
+  for (let i = 0; i < p.arm_screen_points.length; i++) {
+    const point = p.arm_screen_points[i]
+    const a = function (): void {
+      circfill(point.x, point.y, 1, col.peach)
+    }
+    insert_into2(orderArray, p.arm_screen_points[i], a)
+  }
+
+  // Draw sorted arm joints.
+  // TODO: Add player body.
+
   // Draw arm joints.
+  /*
   const len = p.arm_screen_points.length
   for (let i = 0; i < len - 1; i++) {
     const point = p.arm_screen_points[i]
     circfill(point.x, point.y, 1, col.peach)
   }
   circfill(racket_head.x, racket_head.y, 3, col.white)
+  */
 
   // Draw lines between arm joints.
-  line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
+  // line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
 
   // Print distance to ball.
   print('dist to ball: ' + (vec3_dist(p.target, p.pos) / meter))
