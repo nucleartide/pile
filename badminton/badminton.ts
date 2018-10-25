@@ -1000,10 +1000,11 @@ function player_move_arm(p: Player): void {
   const racket_len = 0.67 * meter
 
   // Compute distance to target.
-  const dist_to_target = vec3_dist(p.target, p.pos) / meter
+  // const dist_to_target = vec3_dist(p.target, p.pos) / meter
 
   // Choose target.
-  let target
+  let target = p.target
+  /*
   if (dist_to_target < 0.5 * meter) {
     target = p.target
   } else {
@@ -1012,6 +1013,7 @@ function player_move_arm(p: Player): void {
     target_spare.y = p.pos.y + 0.75 * meter
     target_spare.z = p.pos.z + p.player_dir * 0.25 * meter
   }
+  */
 
   // Reach for target.
   reach(racket_head, wrist, target, racket_len)
