@@ -341,9 +341,9 @@ function insert_into(order: OrderArray, pos: Vec3, a: Actor): void {
   add(order, [pos, a])
 }
 
-type OrderObjArray = Array<[Vec3, Object]>
+type OrderFuncArray = Array<[Vec3, Function]>
 
-function insert_into2(order: OrderObjArray, pos: Vec3, a: Function): void {
+function insert_into2(order: OrderFuncArray, pos: Vec3, a: Function): void {
   for (let i = 0; i < order.length; i++) {
     const current = order[i]
     if (pos.z < current[0].z) {
@@ -1144,20 +1144,17 @@ function player_update(p: Player): void {
 }
 
 function player_draw(p: Player): void {
+
+  /**
+   * Constants.
+   */
+
   const width = 10
   const height = 25
 
-  // Draw shadow.
-  circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
-
-  // Draw player.
-  rectfill(
-    round(p.screen_pos.x - width / 2),
-    round(p.screen_pos.y - height),
-    round(p.screen_pos.x + width / 2),
-    round(p.screen_pos.y),
-    col.orange
-  )
+  /**
+   * Unsorted.
+   */
 
   // Declare some spare vectors.
   const screen = vec3()
@@ -1174,38 +1171,59 @@ function player_draw(p: Player): void {
   cam_project(p.cam, screen, target)
   circfill(screen.x, screen.y, 2, col.green)
 
+  /**
+   * Sorted.
+   */
+
   // Declare vars for arm joints.
-  const wrist = p.arm_screen_points[2]
+  const chest = p.arm_screen_points[0]
+  const socket = p.arm_screen_points[1]
+  const hand = p.arm_screen_points[2]
   const racket_head = p.arm_screen_points[3]
 
   // Do z-sorting.
-  const orderArray: Array<[Vec3, Object]> = []
-  for (let i = 0; i < p.arm_screen_points.length; i++) {
-    const point = p.arm_screen_points[i]
-    const a = function (): void {
-      circfill(point.x, point.y, 1, col.peach)
-    }
-    insert_into2(orderArray, p.arm_screen_points[i], a)
-  }
+  const orderArray: OrderFuncArray = []
 
-  // Draw sorted arm joints.
-  // TODO: Add player body.
+  // Chest insert.
+  insert_into2(orderArray, chest, function (): void {
+    // Draw shadow.
+    circfill(round(p.screen_pos.x), round(p.screen_pos.y), 3, col.dark_blue)
 
-  // Draw arm joints.
-  /*
-  const len = p.arm_screen_points.length
-  for (let i = 0; i < len - 1; i++) {
-    const point = p.arm_screen_points[i]
-    circfill(point.x, point.y, 1, col.peach)
+    // Draw player.
+    rectfill(
+      round(p.screen_pos.x - width / 2),
+      round(p.screen_pos.y - height),
+      round(p.screen_pos.x + width / 2),
+      round(p.screen_pos.y),
+      col.orange
+    )
+  })
+
+  // Socket insert.
+  insert_into2(orderArray, socket, function (): void {
+    circfill(socket.x, socket.y, 1, col.peach)
+  })
+
+  // Hand insert.
+  insert_into2(orderArray, hand, function (): void {
+    circfill(hand.x, hand.y, 1, col.peach)
+  })
+
+  // Racket head insert.
+  insert_into2(orderArray, racket_head, function (): void {
+    circfill(racket_head.x, racket_head.y, 3, col.white)
+  })
+
+  // Draw ordered player body parts.
+  for (let i = 0; i < orderArray.length; i++) {
+    orderArray[i][1]()
   }
-  circfill(racket_head.x, racket_head.y, 3, col.white)
-  */
 
   // Draw lines between arm joints.
   // line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
 
   // Print distance to ball.
-  print('dist to ball: ' + (vec3_dist(p.target, p.pos) / meter))
+  // print('dist to ball: ' + (vec3_dist(p.target, p.pos) / meter))
 }
 
 /**
