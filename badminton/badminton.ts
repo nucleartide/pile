@@ -927,7 +927,7 @@ function player_move(p: Player): void {
   // Compute acceleration.
 
   vec3_zero(p.acc)
-  p.input_method(p)
+  // p.input_method(p)
 
   // Compute player stance.
 
@@ -1117,6 +1117,25 @@ function player_move_ball(p: Player): void {
 }
 
 function player_pre_serve(p: Player): void {
+  if (btn(button.left)) {
+    p.target.x -= 0.3
+  }
+  if (btn(button.right)) {
+    p.target.x += 0.3
+  }
+  if (btn(button.up)) {
+    p.target.y += 0.3
+  }
+  if (btn(button.down)) {
+    p.target.y -= 0.3
+  }
+  if (btn(button.z)) {
+    p.target.z -= 0.3
+  }
+  if (btn(button.x)) {
+    p.target.z += 0.3
+  }
+
   // Move player.
   player_move(p)
 
@@ -1203,12 +1222,14 @@ function player_draw(p: Player): void {
 
   // Socket insert.
   insert_into2(orderArray, socket, function (): void {
-    circfill(socket.x, socket.y, 1, col.peach)
+    // circfill(socket.x, socket.y, 1, col.peach)
+    line(socket.x, socket.y, hand.x, hand.y, col.peach)
   })
 
   // Hand insert.
   insert_into2(orderArray, hand, function (): void {
     circfill(hand.x, hand.y, 1, col.peach)
+    line(hand.x, hand.y, racket_head.x, racket_head.y, col.red)
   })
 
   // Racket head insert.
