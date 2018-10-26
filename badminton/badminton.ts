@@ -1007,7 +1007,7 @@ function player_move_arm(p: Player): void {
   if (dist_to_target < 0.5 * meter) {
     target = target_spare
     const ball_target = p.target
-    vec3_lerp(target, racket_head, ball_target, 0.4)
+    vec3_lerp(target, racket_head, ball_target, 0.2)
   } else {
     target = target_spare
     const idle_target = vec3(
@@ -1015,7 +1015,7 @@ function player_move_arm(p: Player): void {
       p.pos.y + 0.75 * meter,
       p.pos.z + p.player_dir * 1 * meter
     )
-    vec3_lerp(target, racket_head, idle_target, 0.4)
+    vec3_lerp(target, racket_head, idle_target, 0.2)
   }
 
   // Reach for target.
