@@ -529,7 +529,7 @@ function _draw(): void {
   game.draw(game)
 
   // print cpu
-  print(stat(1), 0, 0)
+  // print(stat(1), 0, 0)
 }
 
 /**
@@ -1000,20 +1000,23 @@ function player_move_arm(p: Player): void {
   const racket_len = 0.67 * meter
 
   // Compute distance to target.
-  // const dist_to_target = vec3_dist(p.target, p.pos) / meter
+  const dist_to_target = vec3_dist(p.target, p.pos) / meter
 
   // Choose target.
-  let target = p.target
-  /*
+  let target: Vec3
   if (dist_to_target < 0.5 * meter) {
-    target = p.target
+    target = target_spare
+    const ball_target = p.target
+    vec3_lerp(target, racket_head, ball_target, 0.4)
   } else {
     target = target_spare
-    target_spare.x = p.pos.x
-    target_spare.y = p.pos.y + 0.75 * meter
-    target_spare.z = p.pos.z + p.player_dir * 0.25 * meter
+    const idle_target = vec3(
+      p.pos.x - p.player_dir * 0.25 * meter,
+      p.pos.y + 0.75 * meter,
+      p.pos.z + p.player_dir * 1 * meter
+    )
+    vec3_lerp(target, racket_head, idle_target, 0.4)
   }
-  */
 
   // Reach for target.
   reach(racket_head, wrist, target, racket_len)
@@ -1241,6 +1244,11 @@ function player_draw(p: Player): void {
   for (let i = 0; i < orderArray.length; i++) {
     orderArray[i][1]()
   }
+
+  // Print some points.
+  // vec3_print(socket)
+  // vec3_print(hand)
+  // vec3_print(racket_head)
 
   // Draw lines between arm joints.
   // line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
