@@ -1057,7 +1057,7 @@ function player_move_arm(p: Player): void {
     // Keeping in mind to not alter `p.target`.
     const target = target_spare
     vec3_assign(target, p.target)
-    target.z += -p.player_dir * (0.02 * meter) * p.swing_frames
+    target.z += -p.player_dir * (0.04 * meter) * p.swing_frames
     vec3_lerp(target, racket_head, target, 0.2)
 
     // Reach for target.
