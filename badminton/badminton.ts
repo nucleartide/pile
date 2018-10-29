@@ -1074,6 +1074,10 @@ function player_move_arm(p: Player): void {
     const racket_head = p.arm_points[3]
     vec3_add(target, p.pos, racket_head_offset)
     vec3_lerp(racket_head, racket_head, target, 0.2)
+
+    // The dist between wrist and racket_head
+    // isn't necessarily constant here, but it's
+    // fine for the purposes of this animation.
   }
 
   // Update screen coordinates.
