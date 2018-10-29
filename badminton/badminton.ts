@@ -906,6 +906,7 @@ interface Player extends Actor {
 
   // Swing-related properties.
   swing_state: swing_state
+  swing_frames: number
 
   // Arm.
   arm_points: [Vec3, Vec3, Vec3, Vec3]
@@ -948,7 +949,8 @@ function player(
     swing_state: swing_state.idle,
     arm_points: points,
     arm_screen_points: more_points,
-    target: vec3()
+    target: vec3(),
+    swing_frames: 0,
   }
 
   if (is_initial_server) {
@@ -1042,6 +1044,15 @@ function player_move_arm(p: Player): void {
   const dist_to_target = vec3_dist(p.target, p.pos) / meter
 
   if (dist_to_target < 0.5 * meter) {
+    // If swing button is held down,
+    if (btn(button.x)) {
+      // Add to swing state.
+      p.swing_frames = p.swing_frames + 1
+
+      // Set a max # of frames (30).
+      p.swing_frames = min(p.swing_frames, 30)
+    }
+
     // Then reach for target.
     const target = target_spare
     const ball_target = p.target
@@ -1059,6 +1070,9 @@ function player_move_arm(p: Player): void {
   } else {
     // Return to idle state.
     const target = target_spare
+
+    // TODO: Reset the swing # of frames.
+    p.swing_frames = 0
 
     // Move arm_socket.
     const arm_socket = p.arm_points[1]
@@ -1296,6 +1310,8 @@ function player_draw(p: Player): void {
   for (let i = 0; i < orderArray.length; i++) {
     orderArray[i][1]()
   }
+
+  print('swing frames:' + p.swing_frames)
 }
 
 /**
