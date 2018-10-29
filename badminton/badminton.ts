@@ -366,6 +366,8 @@ function insert_into2(order: OrderFuncArray, pos: Vec3, a: Function): void {
  */
 
 const reach_spare = vec3()
+const reach_spare2 = vec3()
+
 function reach(
   head: Vec3,
   tail: Vec3,
@@ -400,6 +402,39 @@ function reach(
   vec3_scale(reach_spare, scale)
   vec3_add(tail, tail, reach_spare)
 }
+
+/*
+function reach2(
+  head: Vec3,
+  tail: Vec3,
+  head_target: Vec3,
+  tail_target: Vec3
+): void {
+  // Get stretched length.
+  vec3_sub(reach_spare, tail_target, head_target)
+  const stretched_len = vec3_magnitude(reach_spare)
+
+  // Avoid division by zero.
+  if (stretched_len === 0) {
+    return
+  }
+
+  // Get `head_tail_len`.
+  vec3_sub(reach_spare2, tail, head)
+  const head_tail_len = vec3_magnitude(reach_spare2)
+
+  // Compute scale.
+  const scale = head_tail_len / stretched_len
+
+  // Set new head.
+  vec3_assign(head, head_target)
+
+  // Set new tail.
+  vec3_assign(tail, head_target)
+  vec3_scale(reach_spare, scale)
+  vec3_add(tail, tail, reach_spare)
+}
+*/
 
 /**
  * Game loop.
@@ -985,6 +1020,10 @@ function player_move(p: Player): void {
 
 const chest_spare = vec3()
 const target_spare = vec3()
+const arm_socket_offset = vec3(0.1722 * meter, 0.9227 * meter, -0.1627 * meter)
+const wrist_offset = vec3(0.5525 * meter, 0.7729 * meter, -0.4026 * meter)
+const racket_head_offset = vec3(0.25 * meter, 0.75 * meter, -1 * meter)
+
 function player_move_arm(p: Player): void {
   const chest = p.arm_points[0]
   const socket = p.arm_points[1]
@@ -1002,31 +1041,40 @@ function player_move_arm(p: Player): void {
   // Compute distance to target.
   const dist_to_target = vec3_dist(p.target, p.pos) / meter
 
-  // Choose target.
-  let target: Vec3
   if (dist_to_target < 0.5 * meter) {
-    target = target_spare
+    // Then reach for target.
+    const target = target_spare
     const ball_target = p.target
     vec3_lerp(target, racket_head, ball_target, 0.2)
+
+    // Reach for target.
+    reach(racket_head, wrist, target, racket_len)
+    reach(wrist, socket, wrist, arm_len, true)
+    reach(socket, chest, socket, chest_socket_len)
+
+    // Reverse reach for chest anchor.
+    reach(chest, socket, chest_spare, chest_socket_len)
+    reach(socket, wrist, socket, arm_len, true)
+    reach(wrist, racket_head, wrist, racket_len)
   } else {
-    target = target_spare
-    const idle_target = vec3(
-      p.pos.x - p.player_dir * 0.25 * meter,
-      p.pos.y + 0.75 * meter,
-      p.pos.z + p.player_dir * 1 * meter
-    )
-    vec3_lerp(target, racket_head, idle_target, 0.2)
+    // Return to idle state.
+    const target = target_spare
+
+    // Move arm_socket.
+    const arm_socket = p.arm_points[1]
+    vec3_add(target, p.pos, arm_socket_offset)
+    vec3_lerp(arm_socket, arm_socket, target, 0.2)
+
+    // Move wrist.
+    const wrist = p.arm_points[2]
+    vec3_add(target, p.pos, wrist_offset)
+    vec3_lerp(wrist, wrist, target, 0.2)
+
+    // Move racket_head.
+    const racket_head = p.arm_points[3]
+    vec3_add(target, p.pos, racket_head_offset)
+    vec3_lerp(racket_head, racket_head, target, 0.2)
   }
-
-  // Reach for target.
-  reach(racket_head, wrist, target, racket_len)
-  reach(wrist, socket, wrist, arm_len, true)
-  reach(socket, chest, socket, chest_socket_len)
-
-  // Reverse reach for chest anchor.
-  reach(chest, socket, chest_spare, chest_socket_len)
-  reach(socket, wrist, socket, arm_len, true)
-  reach(wrist, racket_head, wrist, racket_len)
 
   // Update screen coordinates.
   const len = p.arm_points.length
@@ -1244,17 +1292,6 @@ function player_draw(p: Player): void {
   for (let i = 0; i < orderArray.length; i++) {
     orderArray[i][1]()
   }
-
-  // Print some points.
-  // vec3_print(socket)
-  // vec3_print(hand)
-  // vec3_print(racket_head)
-
-  // Draw lines between arm joints.
-  // line(wrist.x, wrist.y, racket_head.x, racket_head.y, col.dark_blue)
-
-  // Print distance to ball.
-  // print('dist to ball: ' + (vec3_dist(p.target, p.pos) / meter))
 }
 
 /**
