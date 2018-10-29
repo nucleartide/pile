@@ -1053,10 +1053,12 @@ function player_move_arm(p: Player): void {
       p.swing_frames = min(p.swing_frames, 30)
     }
 
-    // Then reach for target.
+    // Then reach for target (which is the ball).
+    // Keeping in mind to not alter `p.target`.
     const target = target_spare
-    const ball_target = p.target
-    vec3_lerp(target, racket_head, ball_target, 0.2)
+    vec3_assign(target, p.target)
+    target.z += -p.player_dir * (0.02 * meter) * p.swing_frames
+    vec3_lerp(target, racket_head, target, 0.2)
 
     // Reach for target.
     reach(racket_head, wrist, target, racket_len)
