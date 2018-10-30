@@ -1259,9 +1259,11 @@ function player_draw(p: Player): void {
   circfill(screen.x, screen.y, 2, col.dark_blue)
 
   // Draw target.
-  vec3_assign(target, p.target)
-  cam_project(p.cam, screen, target)
-  circfill(screen.x, screen.y, 2, col.green)
+  if (p.target.y >= 0) {
+    vec3_assign(target, p.target)
+    cam_project(p.cam, screen, target)
+    circfill(screen.x, screen.y, 2, col.green)
+  }
 
   /**
    * Sorted.
