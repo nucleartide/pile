@@ -1256,7 +1256,7 @@ function player_draw(p: Player): void {
   vec3_assign(target, p.target)
   target.y = 0
   cam_project(p.cam, screen, target)
-  circfill(screen.x, screen.y, 2, col.dark_blue)
+  circfill(screen.x, screen.y, 1, col.dark_blue)
 
   // Draw target.
   if (p.target.y >= 0) {
@@ -1307,6 +1307,13 @@ function player_draw(p: Player): void {
 
   // Racket head insert.
   insert_into2(orderArray, racket_head, function (): void {
+    // Draw shadow.
+    vec3_assign(target, p.arm_points[3])
+    target.y = 0
+    cam_project(p.cam, screen, target)
+    circfill(screen.x, screen.y, 2, col.dark_blue)
+
+    // Draw racket head.
     circfill(racket_head.x, racket_head.y, 3, col.white)
   })
 

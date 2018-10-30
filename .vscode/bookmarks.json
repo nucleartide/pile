@@ -78,17 +78,17 @@
 				"label": "Player draw."
 			},
 			{
-				"line": 1320,
+				"line": 1327,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1445,
+				"line": 1452,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1519,
+				"line": 1526,
 				"column": 0,
 				"label": "Court entity."
 			}
