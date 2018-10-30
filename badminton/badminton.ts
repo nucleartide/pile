@@ -1044,8 +1044,18 @@ function player_move_arm(p: Player): void {
   const dist_to_target = vec3_dist(p.target, p.pos) / meter
 
   if (dist_to_target < 0.5 * meter) {
-    // If swing button is held down,
-    if (btn(button.x)) {
+    // Enter winding state.
+    if (btn(button.x) && p.swing_state === swing_state.idle) {
+      p.swing_state = swing_state.winding
+    }
+
+    // Enter idle state.
+    if (!btn(button.x) && p.swing_state === swing_state.winding) {
+      p.swing_state = swing_state.idle
+    }
+
+    // Update swing_frames (1 of 2).
+    if (p.swing_state === swing_state.winding) {
       // Add to swing state.
       p.swing_frames = p.swing_frames + 1
 
@@ -1053,11 +1063,20 @@ function player_move_arm(p: Player): void {
       p.swing_frames = min(p.swing_frames, 30)
     }
 
+    // Update swing_frames (2 of 2).
+    if (p.swing_state === swing_state.idle) {
+      // Subtract from swing state.
+      p.swing_frames = p.swing_frames - 4
+
+      // Set a min # of frames (0).
+      p.swing_frames = max(p.swing_frames, 0)
+    }
+
     // Then reach for target (which is the ball).
     // Keeping in mind to not alter `p.target`.
     const target = target_spare
     vec3_assign(target, p.target)
-    target.z += -p.player_dir * (0.04 * meter) * p.swing_frames
+    target.z += -p.player_dir * (0.08 * meter) * p.swing_frames
     vec3_lerp(target, racket_head, target, 0.2)
 
     // Reach for target.
@@ -1322,7 +1341,7 @@ function player_draw(p: Player): void {
     orderArray[i][1]()
   }
 
-  print('swing frames:' + p.swing_frames)
+  // print('swing frames:' + p.swing_frames)
 }
 
 /**
