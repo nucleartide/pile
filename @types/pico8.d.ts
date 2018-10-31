@@ -168,6 +168,8 @@ declare function sin(x: number): number
  * Types.
  */
 
+declare function tostr(val: boolean): string
+
 /**
  * Cartridge data.
  */

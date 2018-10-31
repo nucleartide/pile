@@ -914,6 +914,9 @@ interface Player extends Actor {
 
   // Temporary target.
   target: Vec3
+
+  // Temporary.
+  ball_hit: boolean
 }
 
 function player(
@@ -951,6 +954,7 @@ function player(
     arm_screen_points: more_points,
     target: vec3(),
     swing_frames: 0,
+    ball_hit: false,
   }
 
   if (is_initial_server) {
@@ -1066,10 +1070,13 @@ function player_move_arm(p: Player): void {
     // Update swing_frames (2 of 2).
     if (p.swing_state === swing_state.idle) {
       // Subtract from swing state.
-      p.swing_frames = p.swing_frames - 4
+      p.swing_frames = p.swing_frames - 8
 
       // Set a min # of frames (0).
       p.swing_frames = max(p.swing_frames, 0)
+
+      const racket_head = p.arm_points[3]
+      p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
     }
 
     // Then reach for target (which is the ball).
@@ -1341,7 +1348,7 @@ function player_draw(p: Player): void {
     orderArray[i][1]()
   }
 
-  // print('swing frames:' + p.swing_frames)
+  print('ball hit:' + tostr(p.ball_hit))
 }
 
 /**
