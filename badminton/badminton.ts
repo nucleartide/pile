@@ -1070,7 +1070,7 @@ function player_move_arm(p: Player): void {
     // Update swing_frames (2 of 2).
     if (p.swing_state === swing_state.idle) {
       // Subtract from swing state.
-      p.swing_frames = p.swing_frames - 8
+      p.swing_frames = p.swing_frames - 15
 
       // Set a min # of frames (0).
       p.swing_frames = max(p.swing_frames, 0)
@@ -1083,7 +1083,7 @@ function player_move_arm(p: Player): void {
     // Keeping in mind to not alter `p.target`.
     const target = target_spare
     vec3_assign(target, p.target)
-    target.z += -p.player_dir * (0.08 * meter) * p.swing_frames
+    target.z += -p.player_dir * (0.16 * meter) * p.swing_frames
     vec3_lerp(target, racket_head, target, 0.2)
 
     // Reach for target.
