@@ -482,6 +482,9 @@ function _init(): void {
    */
 
   const b = ball(c, n)
+  b.pos.x = 0
+  b.pos.y = 1 * meter
+  b.pos.z = 0
 
   /**
    * Construct game.
@@ -512,7 +515,7 @@ function _init(): void {
   // Ball should come after Players to avoid lag.
   // Game should come first, because it holds
   // current game state.
-  actors = [g, c, n, crt, player_user]
+  actors = [g, c, n, crt, player_user, b]
 
   actors_obj = {
     camera: c,
@@ -520,6 +523,7 @@ function _init(): void {
     court: crt,
     game: g,
     player: player_user,
+    ball: b,
   }
 }
 
@@ -544,6 +548,7 @@ function _draw(): void {
   const order: OrderArray = []
   insert_into(order, zero_vec, actors_obj.net)
   insert_into(order, (actors_obj.player as Player).pos, actors_obj.player)
+  insert_into(order, (actors_obj.ball as Ball).pos, actors_obj.ball)
 
   /**
    * Draw.
@@ -1364,7 +1369,6 @@ interface Ball extends Actor {
 
   // Velocity.
   vel: Vec3
-  vel60: Vec3
 
   // Acceleration.
   acc: Vec3
@@ -1386,7 +1390,6 @@ function ball(c: Camera, n: Net): Ball {
     pos: vec3(0, 3 * meter, 5 * meter),
     shadow_pos: vec3(),
     vel: vec3(0, 1 * meter, 0),
-    vel60: vec3(),
     acc: vec3(0, -10 * meter, 0),
     screen_pos: vec3(),
     screen_shadow_pos: vec3(),

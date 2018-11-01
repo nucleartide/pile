@@ -18,77 +18,77 @@
 				"label": "Game loop."
 			},
 			{
-				"line": 567,
+				"line": 572,
 				"column": 0,
 				"label": "Post–Game loop."
 			},
 			{
-				"line": 569,
+				"line": 574,
 				"column": 0,
 				"label": "Line primitive."
 			},
 			{
-				"line": 610,
+				"line": 615,
 				"column": 0,
 				"label": "Polygon primitive."
 			},
 			{
-				"line": 726,
+				"line": 731,
 				"column": 0,
 				"label": "Camera entity."
 			},
 			{
-				"line": 784,
+				"line": 789,
 				"column": 0,
 				"label": "Game entity."
 			},
 			{
-				"line": 838,
+				"line": 843,
 				"column": 0,
 				"label": "Player enums."
 			},
 			{
-				"line": 869,
+				"line": 874,
 				"column": 0,
 				"label": "Player entity."
 			},
 			{
-				"line": 1032,
+				"line": 1037,
 				"column": 0,
 				"label": "Player movement – arm."
 			},
 			{
-				"line": 1131,
+				"line": 1136,
 				"column": 0,
 				"label": "Player methods."
 			},
 			{
-				"line": 1215,
+				"line": 1220,
 				"column": 0,
 				"label": "Player pre-serve state."
 			},
 			{
-				"line": 1242,
+				"line": 1247,
 				"column": 0,
 				"label": "Player update."
 			},
 			{
-				"line": 1263,
+				"line": 1268,
 				"column": 0,
 				"label": "Player draw."
 			},
 			{
-				"line": 1353,
+				"line": 1358,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1478,
+				"line": 1481,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1552,
+				"line": 1555,
 				"column": 0,
 				"label": "Court entity."
 			}
