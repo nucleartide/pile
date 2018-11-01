@@ -973,7 +973,7 @@ function player_move(p: Player): void {
   // Compute acceleration.
 
   vec3_zero(p.acc)
-  // p.input_method(p)
+  p.input_method(p)
 
   // Compute player stance.
 
@@ -1102,25 +1102,34 @@ function player_move_arm(p: Player): void {
     reach(wrist, racket_head, wrist, racket_len)
   } else {
     // Return to idle state.
-    const target = target_spare
+    // const target = target_spare
 
-    // TODO: Reset the swing # of frames.
+    // Declare diff to fix lerping.
+    const current_offset = target_spare
+
+    // Reset the swing # of frames.
     p.swing_frames = 0
 
     // Move arm_socket.
     const arm_socket = p.arm_points[1]
-    vec3_add(target, p.pos, arm_socket_offset)
-    vec3_lerp(arm_socket, arm_socket, target, 0.2)
+    vec3_sub(current_offset, arm_socket, p.pos)
+    vec3_lerp(current_offset, current_offset, arm_socket_offset, 0.2)
+    vec3_add(current_offset, p.pos, current_offset)
+    vec3_assign(arm_socket, current_offset)
 
     // Move wrist.
     const wrist = p.arm_points[2]
-    vec3_add(target, p.pos, wrist_offset)
-    vec3_lerp(wrist, wrist, target, 0.2)
+    vec3_sub(current_offset, wrist, p.pos)
+    vec3_lerp(current_offset, current_offset, wrist_offset, 0.2)
+    vec3_add(current_offset, p.pos, current_offset)
+    vec3_assign(wrist, current_offset)
 
     // Move racket_head.
     const racket_head = p.arm_points[3]
-    vec3_add(target, p.pos, racket_head_offset)
-    vec3_lerp(racket_head, racket_head, target, 0.2)
+    vec3_sub(current_offset, racket_head, p.pos)
+    vec3_lerp(current_offset, current_offset, racket_head_offset, 0.2)
+    vec3_add(current_offset, p.pos, current_offset)
+    vec3_assign(racket_head, current_offset)
 
     // The dist between wrist and racket_head
     // isn't necessarily constant here, but it's
@@ -1219,6 +1228,7 @@ function player_move_ball(p: Player): void {
 }
 
 function player_pre_serve(p: Player): void {
+  /*
   if (btn(button.left)) {
     p.target.x -= 0.3
   }
@@ -1237,6 +1247,7 @@ function player_pre_serve(p: Player): void {
   if (btn(button.x)) {
     p.target.z += 0.3
   }
+  */
 
   // Move player.
   player_move(p)
