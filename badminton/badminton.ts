@@ -482,9 +482,12 @@ function _init(): void {
    */
 
   const b = ball(c, n)
-  b.pos.x = 0
-  b.pos.y = 1 * meter
-  b.pos.z = 0
+
+  b.pos.x = 1.5 * meter
+  b.pos.y = 1.5 * meter
+  b.pos.z = 3 * meter
+
+  b.vel.y = 5 * meter
 
   /**
    * Construct game.
@@ -1036,6 +1039,9 @@ const wrist_offset = vec3(0.5525 * meter, 0.7729 * meter, -0.4026 * meter)
 const racket_head_offset = vec3(0.25 * meter, 0.75 * meter, -1 * meter)
 
 function player_move_arm(p: Player): void {
+  // Temporary.
+  p.target = p.game.ball.pos
+
   const chest = p.arm_points[0]
   const socket = p.arm_points[1]
   const wrist = p.arm_points[2]
@@ -1294,6 +1300,7 @@ function player_draw(p: Player): void {
   const screen = vec3()
   const target = vec3()
 
+  /*
   // Draw target shadow.
   vec3_assign(target, p.target)
   target.y = 0
@@ -1306,6 +1313,7 @@ function player_draw(p: Player): void {
     cam_project(p.cam, screen, target)
     circfill(screen.x, screen.y, 2, col.green)
   }
+  */
 
   /**
    * Sorted.
@@ -1487,7 +1495,7 @@ function ball_draw(b: Ball): void {
   )
 
   // draw ball
-  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 1, col.yellow)
+  circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.green)
 }
 
 /**
