@@ -1080,6 +1080,11 @@ function player_move_arm(p: Player): void {
 
     // Update swing_frames (2 of 2).
     if (p.swing_state === swing_state.idle) {
+      if (p.swing_frames > 0) {
+        // Affect ball state.
+        p.game.ball.vel.z = p.player_dir * 3 * meter
+      }
+
       // Subtract from swing state.
       p.swing_frames = p.swing_frames - 15
 
