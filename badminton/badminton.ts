@@ -873,6 +873,7 @@ enum player_stance {
 enum swing_state {
   idle,
   winding,
+  swing,
 }
 
 /**
@@ -1028,8 +1029,8 @@ function player_move(p: Player): void {
 
   // Update chest position.
 
-  vec3_assign(p.arm_points[0], p.pos)
-  p.arm_points[0].y = 1 * meter
+  // vec3_assign(p.arm_points[0], p.pos)
+  // p.arm_points[0].y = 1 * meter
 }
 
 const chest_spare = vec3()
@@ -1039,45 +1040,60 @@ const wrist_offset = vec3(0.5525 * meter, 0.7729 * meter, -0.4026 * meter)
 const racket_head_offset = vec3(0.25 * meter, 0.75 * meter, -1 * meter)
 
 function player_move_arm(p: Player): void {
-  // Temporary.
-  p.target = p.game.ball.pos
-
+  // References.
+  const ball = p.game.ball.pos
   const chest = p.arm_points[0]
-  const socket = p.arm_points[1]
+  const arm_socket = p.arm_points[1]
   const wrist = p.arm_points[2]
   const racket_head = p.arm_points[3]
 
-  // Save chest location. This will be the anchor.
-  vec3_assign(chest_spare, chest)
-
   // Lengths.
-  const chest_socket_len = 0.25 * meter
-  const arm_len = 0.75 * meter
-  const racket_len = 0.67 * meter
+  const chest_to_arm_socket = 0.25 * meter
+  const arm_socket_to_wrist = 0.75 * meter
+  const wrist_to_racket_head = 0.67 * meter
 
-  // Compute distance to target.
-  const dist_to_target = vec3_dist(p.target, p.pos) / meter
+  // Compute distance between chest and ball.
+  vec3_assign(chest_spare, p.pos)
+  chest_spare.y += 1 * meter // Player could be in the air.
+  const dist_to_ball = vec3_dist(ball, chest_spare) / meter
+  const near_ball = dist_to_ball < 0.5 * meter
 
-  if (dist_to_target < 0.5 * meter) {
+  // Near ball.
+  if (near_ball) {
     // Enter winding state.
     if (btn(button.x) && p.swing_state === swing_state.idle) {
       p.swing_state = swing_state.winding
     }
 
-    // Enter idle state.
+    // Enter swing state.
     if (!btn(button.x) && p.swing_state === swing_state.winding) {
-      p.swing_state = swing_state.idle
+      p.swing_state = swing_state.swing
     }
 
-    // Update swing_frames (1 of 2).
+    // TODO: Enter idle state.
+    // ...
+
+    // Update swing frames for winding state.
     if (p.swing_state === swing_state.winding) {
-      // Add to swing state.
       p.swing_frames = p.swing_frames + 1
-
-      // Set a max # of frames (30).
-      p.swing_frames = min(p.swing_frames, 30)
+      p.swing_frames = min(p.swing_frames, 30) // Set max # of frames.
     }
 
+    // TODO: Update swing frames for swing state.
+    // ...
+
+    // TODO: Update swing frames for idle state.
+    // ...
+
+    // Remember to return!
+    return
+  }
+
+  // Not near ball.
+
+  /*
+
+  if (dist_to_target < 0.5 * meter) {
     // Update swing_frames (2 of 2).
     if (p.swing_state === swing_state.idle) {
       if (p.swing_frames > 0) {
@@ -1152,6 +1168,7 @@ function player_move_arm(p: Player): void {
   for (let i = 0; i < len; i++) {
     cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
   }
+  */
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1377,7 +1394,7 @@ function player_draw(p: Player): void {
     orderArray[i][1]()
   }
 
-  print('ball hit:' + tostr(p.ball_hit))
+  // print('ball hit:' + tostr(p.ball_hit))
 }
 
 /**

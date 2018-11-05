@@ -48,52 +48,52 @@
 				"label": "Player enums."
 			},
 			{
-				"line": 877,
+				"line": 878,
 				"column": 0,
 				"label": "Player entity."
 			},
 			{
-				"line": 974,
+				"line": 975,
 				"column": 9,
 				"label": "Player movement."
 			},
 			{
-				"line": 1040,
+				"line": 1041,
 				"column": 0,
 				"label": "Player movement – arm."
 			},
 			{
-				"line": 1156,
+				"line": 1173,
 				"column": 0,
 				"label": "Player methods."
 			},
 			{
-				"line": 1240,
+				"line": 1257,
 				"column": 0,
 				"label": "Player pre-serve state."
 			},
 			{
-				"line": 1269,
+				"line": 1286,
 				"column": 0,
 				"label": "Player update."
 			},
 			{
-				"line": 1290,
+				"line": 1307,
 				"column": 0,
 				"label": "Player draw."
 			},
 			{
-				"line": 1382,
+				"line": 1399,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1505,
+				"line": 1522,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1579,
+				"line": 1596,
 				"column": 0,
 				"label": "Court entity."
 			}
