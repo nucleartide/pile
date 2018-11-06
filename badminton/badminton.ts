@@ -1058,64 +1058,58 @@ function player_move_arm(p: Player): void {
   const dist_to_ball = vec3_dist(ball, chest_spare) / meter
   const near_ball = dist_to_ball < 0.5 * meter
 
-  // Near ball.
-  if (near_ball) {
-    // Enter winding state.
-    if (btn(button.x) && p.swing_state === swing_state.idle) {
-      p.swing_state = swing_state.winding
-    }
+  // Constants.
+  const min_swing_frames = -10
+  const max_swing_frames = 40
+  const idle_speed = 5
+  const winding_speed = 5
+  const swing_speed = 20
+  const dist_per_frame = .16 * meter
 
-    // Enter swing state.
-    if (!btn(button.x) && p.swing_state === swing_state.winding) {
-      p.swing_state = swing_state.swing
-    }
-
-    // TODO: Enter idle state.
-    // ...
-
-    // Update swing frames for winding state.
-    if (p.swing_state === swing_state.winding) {
-      p.swing_frames = p.swing_frames + 1
-      p.swing_frames = min(p.swing_frames, 30) // Set max # of frames.
-    }
-
-    // TODO: Update swing frames for swing state.
-    // ...
-
-    // TODO: Update swing frames for idle state.
-    // ...
-
-    // Remember to return!
-    return
+  // State transitions.
+  if (p.swing_state === swing_state.idle && btn(button.x)) {
+    p.swing_state = swing_state.winding
+  }
+  if (p.swing_state === swing_state.winding && !btn(button.x)) {
+    p.swing_state = swing_state.swing
+  }
+  if (p.swing_state === swing_state.swing && p.swing_frames === min_swing_frames) {
+    p.swing_state = swing_state.idle
   }
 
-  // Not near ball.
+  // Update swing frames.
+  if (p.swing_state === swing_state.idle) {
+    p.swing_frames = min(p.swing_frames + idle_speed, 0)
+  }
+  if (p.swing_state === swing_state.winding) {
+    p.swing_frames = min(p.swing_frames + winding_speed, max_swing_frames)
+  }
+  if (p.swing_state === swing_state.swing) {
+    p.swing_frames = max(p.swing_frames + swing_speed, min_swing_frames)
+  }
+
+  if (near_ball) {
+    // TODO: Reach for the ball, keeping in mind the offset for swing frames.
+
+    // Remember to not alter `ball` vector.
+    vec3_assign(target_spare, ball)
+
+    // Offset target.
+    target_spare.z += -p.player_dir * dist_per_frame * p.swing_frames
+  } else {
+    // TODO: Lerp towards idle configuration, keeping in mind the offset for swing frames.
+  }
+
+  // TODO: Update screen coordinates.
+
+  // TODO: Affect ball state. Update `p.ball_hit` property.
+  // p.game.ball.vel.z = p.player_dir * 3 * meter
+  // p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
 
   /*
-
+  // If the ball is near,
   if (dist_to_target < 0.5 * meter) {
-    // Update swing_frames (2 of 2).
-    if (p.swing_state === swing_state.idle) {
-      if (p.swing_frames > 0) {
-        // Affect ball state.
-        p.game.ball.vel.z = p.player_dir * 3 * meter
-      }
-
-      // Subtract from swing state.
-      p.swing_frames = p.swing_frames - 15
-
-      // Set a min # of frames (0).
-      p.swing_frames = max(p.swing_frames, 0)
-
-      const racket_head = p.arm_points[3]
-      p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
-    }
-
-    // Then reach for target (which is the ball).
-    // Keeping in mind to not alter `p.target`.
-    const target = target_spare
-    vec3_assign(target, p.target)
-    target.z += -p.player_dir * (0.16 * meter) * p.swing_frames
+    // TODO: racket head isn't relative
     vec3_lerp(target, racket_head, target, 0.2)
 
     // Reach for target.
