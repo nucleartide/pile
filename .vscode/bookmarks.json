@@ -13,52 +13,52 @@
 				"label": "Utils."
 			},
 			{
-				"line": 438,
+				"line": 454,
 				"column": 0,
 				"label": "Game loop."
 			},
 			{
-				"line": 575,
+				"line": 591,
 				"column": 0,
 				"label": "Post–Game loop."
 			},
 			{
-				"line": 577,
+				"line": 593,
 				"column": 0,
 				"label": "Line primitive."
 			},
 			{
-				"line": 618,
+				"line": 634,
 				"column": 0,
 				"label": "Polygon primitive."
 			},
 			{
-				"line": 734,
+				"line": 750,
 				"column": 0,
 				"label": "Camera entity."
 			},
 			{
-				"line": 792,
+				"line": 808,
 				"column": 0,
 				"label": "Game entity."
 			},
 			{
-				"line": 846,
+				"line": 862,
 				"column": 0,
 				"label": "Player enums."
 			},
 			{
-				"line": 878,
+				"line": 894,
 				"column": 0,
 				"label": "Player entity."
 			},
 			{
-				"line": 975,
+				"line": 991,
 				"column": 9,
 				"label": "Player movement."
 			},
 			{
-				"line": 1041,
+				"line": 1063,
 				"column": 0,
 				"label": "Player movement – arm."
 			},
@@ -83,17 +83,17 @@
 				"label": "Player draw."
 			},
 			{
-				"line": 1393,
+				"line": 1381,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1516,
+				"line": 1504,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1590,
+				"line": 1578,
 				"column": 0,
 				"label": "Court entity."
 			}

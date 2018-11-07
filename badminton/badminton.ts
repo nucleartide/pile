@@ -101,15 +101,31 @@ function vec3(x?: number, y?: number, z?: number): Vec3 {
 }
 
 function vec3_add(out: Vec3, a: Vec3, b: Vec3): void {
-  out.x = a.x + b.x
-  out.y = a.y + b.y
-  out.z = a.z + b.z
+  const ax = a.x
+  const ay = a.y
+  const az = a.z
+
+  const bx = b.x
+  const by = b.y
+  const bz = b.z
+
+  out.x = ax + bx
+  out.y = ay + by
+  out.z = az + bz
 }
 
 function vec3_sub(out: Vec3, a: Vec3, b: Vec3): void {
-  out.x = a.x - b.x
-  out.y = a.y - b.y
-  out.z = a.z - b.z
+  const ax = a.x
+  const ay = a.y
+  const az = a.z
+
+  const bx = b.x
+  const by = b.y
+  const bz = b.z
+
+  out.x = ax - bx
+  out.y = ay - by
+  out.z = az - bz
 }
 
 function vec3_mul(out: Vec3, a: Vec3, b: Vec3): void {
@@ -1035,9 +1051,15 @@ function player_move(p: Player): void {
 
 const chest_spare = vec3()
 const target_spare = vec3()
+const arm_points_spare = vec3()
+
+// Offsets relative to chest.
 const arm_socket_offset = vec3(0.1722 * meter, 0.9227 * meter, -0.1627 * meter)
 const wrist_offset = vec3(0.5525 * meter, 0.7729 * meter, -0.4026 * meter)
 const racket_head_offset = vec3(0.25 * meter, 0.75 * meter, -1 * meter)
+
+// Offset relative to player pos.
+const chest_offset = vec3(0, 1 * meter, 0)
 
 function player_move_arm(p: Player): void {
   // References.
@@ -1053,8 +1075,7 @@ function player_move_arm(p: Player): void {
   const wrist_to_racket_head = 0.67 * meter
 
   // Compute distance between chest and ball.
-  vec3_assign(chest_spare, p.pos)
-  chest_spare.y += 1 * meter // Player could be in the air.
+  vec3_add(chest_spare, p.pos, chest_offset)
   const dist_to_ball = vec3_dist(ball, chest_spare) / meter
   const near_ball = dist_to_ball < 0.5 * meter
 
@@ -1089,68 +1110,42 @@ function player_move_arm(p: Player): void {
   }
 
   if (near_ball) {
-    // TODO: Reach for the ball, keeping in mind the offset for swing frames.
+    // Then reach for the ball, keeping in mind the offset for swing frames.
 
     // Remember to not alter `ball` vector.
     vec3_assign(target_spare, ball)
 
     // Offset target.
+    vec3_add(target_spare, target_spare, chest_offset)
     target_spare.z += -p.player_dir * dist_per_frame * p.swing_frames
-  } else {
-    // TODO: Lerp towards idle configuration, keeping in mind the offset for swing frames.
-  }
 
-  // TODO: Update screen coordinates.
+    // Convert target to local space.
+    vec3_sub(target_spare, target_spare, chest_spare)
 
-  // TODO: Affect ball state. Update `p.ball_hit` property.
-  // p.game.ball.vel.z = p.player_dir * 3 * meter
-  // p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
-
-  /*
-  // If the ball is near,
-  if (dist_to_target < 0.5 * meter) {
-    // TODO: racket head isn't relative
-    vec3_lerp(target, racket_head, target, 0.2)
+    // Lerp from racket_head to target.
+    vec3_lerp(target_spare, racket_head, target_spare, 0.2)
 
     // Reach for target.
-    reach(racket_head, wrist, target, racket_len)
-    reach(wrist, socket, wrist, arm_len, true)
-    reach(socket, chest, socket, chest_socket_len)
+    reach(racket_head, wrist, target_spare, wrist_to_racket_head)
+    reach(wrist, arm_socket, wrist, arm_socket_to_wrist, true)
+    reach(arm_socket, chest, arm_socket, chest_to_arm_socket)
 
     // Reverse reach for chest anchor.
-    reach(chest, socket, chest_spare, chest_socket_len)
-    reach(socket, wrist, socket, arm_len, true)
-    reach(wrist, racket_head, wrist, racket_len)
+    // Since we are in local space, this is {0,0,0}.
+    reach(chest, arm_socket, chest_offset, chest_to_arm_socket)
+    reach(arm_socket, wrist, arm_socket, arm_socket_to_wrist, true)
+    reach(wrist, racket_head, wrist, wrist_to_racket_head)
   } else {
-    // Return to idle state.
-    // const target = target_spare
-
-    // Declare diff to fix lerping.
-    const current_offset = target_spare
-
-    // Reset the swing # of frames.
-    p.swing_frames = 0
+    // Then lerp towards idle configuration, keeping in mind the offset for swing frames.
 
     // Move arm_socket.
-    const arm_socket = p.arm_points[1]
-    vec3_sub(current_offset, arm_socket, p.pos)
-    vec3_lerp(current_offset, current_offset, arm_socket_offset, 0.2)
-    vec3_add(current_offset, p.pos, current_offset)
-    vec3_assign(arm_socket, current_offset)
+    vec3_lerp(arm_socket, arm_socket, arm_socket_offset, 0.2)
 
     // Move wrist.
-    const wrist = p.arm_points[2]
-    vec3_sub(current_offset, wrist, p.pos)
-    vec3_lerp(current_offset, current_offset, wrist_offset, 0.2)
-    vec3_add(current_offset, p.pos, current_offset)
-    vec3_assign(wrist, current_offset)
+    vec3_lerp(wrist, wrist, wrist_offset, 0.2)
 
     // Move racket_head.
-    const racket_head = p.arm_points[3]
-    vec3_sub(current_offset, racket_head, p.pos)
-    vec3_lerp(current_offset, current_offset, racket_head_offset, 0.2)
-    vec3_add(current_offset, p.pos, current_offset)
-    vec3_assign(racket_head, current_offset)
+    vec3_lerp(racket_head, racket_head, racket_head_offset, 0.2)
 
     // The dist between wrist and racket_head
     // isn't necessarily constant here, but it's
@@ -1158,11 +1153,16 @@ function player_move_arm(p: Player): void {
   }
 
   // Update screen coordinates.
+  // Remember to convert arm_points into world space first!
   const len = p.arm_points.length
   for (let i = 0; i < len; i++) {
-    cam_project(p.cam, p.arm_screen_points[i], p.arm_points[i])
+    vec3_add(arm_points_spare, p.pos, p.arm_points[i])
+    cam_project(p.cam, p.arm_screen_points[i], arm_points_spare)
   }
-  */
+
+  // TODO: Affect ball state. Update `p.ball_hit` property.
+  // p.game.ball.vel.z = p.player_dir * 3 * meter
+  // p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1316,21 +1316,6 @@ function player_draw(p: Player): void {
   const screen = vec3()
   const target = vec3()
 
-  /*
-  // Draw target shadow.
-  vec3_assign(target, p.target)
-  target.y = 0
-  cam_project(p.cam, screen, target)
-  circfill(screen.x, screen.y, 1, col.dark_blue)
-
-  // Draw target.
-  if (p.target.y >= 0) {
-    vec3_assign(target, p.target)
-    cam_project(p.cam, screen, target)
-    circfill(screen.x, screen.y, 2, col.green)
-  }
-  */
-
   /**
    * Sorted.
    */
@@ -1373,10 +1358,15 @@ function player_draw(p: Player): void {
 
   // Racket head insert.
   insert_into2(orderArray, racket_head, function (): void {
-    // Draw shadow.
-    vec3_assign(target, p.arm_points[3])
+    // Find shadow position in world space.
+    vec3_add(target, p.pos, chest_offset)
+    vec3_add(target, target, p.arm_points[3])
     target.y = 0
+
+    // Find screen space coordinates.
     cam_project(p.cam, screen, target)
+
+    // Draw shadow.
     circfill(screen.x, screen.y, 2, col.dark_blue)
 
     // Draw racket head.
@@ -1387,8 +1377,6 @@ function player_draw(p: Player): void {
   for (let i = 0; i < orderArray.length; i++) {
     orderArray[i][1]()
   }
-
-  // print('ball hit:' + tostr(p.ball_hit))
 }
 
 /**
