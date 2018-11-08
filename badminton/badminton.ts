@@ -1074,12 +1074,12 @@ function player_move_arm(p: Player): void {
   const near_ball = dist_to_ball < 0.5 * meter
 
   // Constants.
-  const min_swing_frames = -10
+  const min_swing_frames = -50
   const max_swing_frames = 40
   const idle_speed = 5
   const winding_speed = 5
-  const swing_speed = 20
-  const dist_per_frame = .16 * meter
+  const swing_speed = -20
+  const dist_per_frame = .06 * meter
 
   // State transitions.
   if (p.swing_state === swing_state.idle && btn(button.x)) {
@@ -1369,6 +1369,9 @@ function player_draw(p: Player): void {
   for (let i = 0; i < orderArray.length; i++) {
     orderArray[i][1]()
   }
+
+  // Print swing state.
+  print('swing state:' + p.swing_state)
 }
 
 /**
