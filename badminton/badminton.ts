@@ -503,7 +503,7 @@ function _init(): void {
   b.pos.y = 1.5 * meter
   b.pos.z = 3 * meter
 
-  b.vel.y = 5 * meter
+  b.vel.y = 7 * meter
 
   /**
    * Construct game.
@@ -1134,6 +1134,13 @@ function player_move_arm(p: Player): void {
     reach(chest, arm_socket, chest_offset, chest_to_arm_socket)
     reach(arm_socket, wrist, arm_socket, arm_socket_to_wrist, true)
     reach(wrist, racket_head, wrist, wrist_to_racket_head)
+
+    // If we hit the ball (roughly speaking), affect the ball state.
+    vec3_add(chest_spare, p.pos, racket_head)
+    const ball_hit = vec3_dist(chest_spare, ball) < 0.5 * meter
+    if (ball_hit && p.swing_state === swing_state.swing) {
+      p.game.ball.vel.z = p.player_dir * 30 * meter
+    }
   } else {
     // Then lerp towards idle configuration, keeping in mind the offset for swing frames.
 
@@ -1158,10 +1165,6 @@ function player_move_arm(p: Player): void {
     vec3_add(arm_points_spare, p.pos, p.arm_points[i])
     cam_project(p.cam, p.arm_screen_points[i], arm_points_spare)
   }
-
-  // TODO: Affect ball state. Update `p.ball_hit` property.
-  // p.game.ball.vel.z = p.player_dir * 3 * meter
-  // p.ball_hit = vec3_dist(p.target, racket_head) < 0.1 * meter
 }
 
 function player_keyboard_input(p: Player): void {
@@ -1378,7 +1381,7 @@ function player_draw(p: Player): void {
   }
 
   // Print swing state.
-  print('swing state:' + p.swing_state)
+  // print('swing state:' + p.swing_state)
 }
 
 /**
@@ -1502,6 +1505,8 @@ function ball_draw(b: Ball): void {
 
   // draw ball
   circfill(round(b.screen_pos.x), round(b.screen_pos.y), 2, col.green)
+
+  // vec3_print(b.vel)
 }
 
 /**
