@@ -1054,6 +1054,7 @@ const arm_socket_offset = vec3(0.1722 * meter, 0.9227 * meter, -0.1627 * meter)
 const wrist_offset = vec3(0.5525 * meter, 0.7729 * meter, -0.4026 * meter)
 const racket_head_offset = vec3(0.25 * meter, 0.75 * meter, -1 * meter)
 const chest_offset = vec3(0, 1 * meter, 0)
+const idle_target_offset = vec3(1.15 * meter, 1 * meter, 0)
 
 function player_move_arm(p: Player): void {
   // References.
@@ -1103,17 +1104,23 @@ function player_move_arm(p: Player): void {
     p.swing_frames = max(p.swing_frames + swing_speed, min_swing_frames)
   }
 
-  if (near_ball) {
+  if (near_ball || (p.swing_state !== swing_state.idle || p.swing_frames !== 0)) {
     // Then reach for the ball, keeping in mind the offset for swing frames.
 
     // Remember to not alter `ball` vector.
-    vec3_assign(target_spare, ball)
+    if (near_ball) {
+      // Target is ball.
+      vec3_assign(target_spare, ball)
+
+      // Convert target to local space.
+      vec3_sub(target_spare, target_spare, p.pos)
+    } else {
+      // Target is "idle target offset", which is already in local space.
+      vec3_assign(target_spare, idle_target_offset)
+    }
 
     // Offset target.
     target_spare.z += -p.player_dir * dist_per_frame * p.swing_frames
-
-    // Convert target to local space.
-    vec3_sub(target_spare, target_spare, p.pos)
 
     // Lerp from racket_head to target.
     vec3_lerp(target_spare, racket_head, target_spare, 0.2)
