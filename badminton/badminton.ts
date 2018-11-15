@@ -500,10 +500,10 @@ function _init(): void {
   const b = ball(c, n)
 
   b.pos.x = 1.5 * meter
-  b.pos.y = 1.5 * meter
+  b.pos.y = 3.0 * meter
   b.pos.z = 3 * meter
 
-  b.vel.y = 7 * meter
+  b.vel.y = 5 * meter
 
   /**
    * Construct game.
@@ -1406,6 +1406,8 @@ interface Ball extends Actor {
 
   // Acceleration.
   acc: Vec3
+  // Drag.
+  drag: Vec3
 
   // Dependencies.
   cam: Camera
@@ -1417,6 +1419,7 @@ interface Ball extends Actor {
   // Spare vec3's for computation.
   spare: Vec3
   next_pos: Vec3
+  spare2: Vec3
 }
 
 function ball(c: Camera, n: Net): Ball {
@@ -1425,6 +1428,7 @@ function ball(c: Camera, n: Net): Ball {
     shadow_pos: vec3(),
     vel: vec3(0, 1 * meter, 0),
     acc: vec3(0, -10 * meter, 0),
+    drag: vec3(0, 0, 0),
     screen_pos: vec3(),
     screen_shadow_pos: vec3(),
     cam: c,
@@ -1433,14 +1437,28 @@ function ball(c: Camera, n: Net): Ball {
     update: ball_update,
     draw: ball_draw,
     spare: vec3(),
+    spare2: vec3(),
     next_pos: vec3(),
   }
 }
 
 function ball_update(b: Ball): void {
   if (!b.is_kinematic && b.pos.y > 0) {
+    // Store velocity in spare. Normalize.
+    vec3_assign(b.spare2, b.vel)
+    vec3_normalize(b.spare2)
+
+    // Compute drag force for this frame. Note that we don't divide by 60, rather we use a constant.
+    // TODO: This might overflow.
+    let speed = vec3_magnitude(b.vel)
+    const c = 0.01
+    speed = c * speed * speed
+    vec3_scale(b.spare2, -speed)
+
+    // Combine forces.
     // Compute change in velocity for this frame.
-    vec3_assign(b.spare, b.acc)
+    vec3_add(b.spare, b.acc, b.spare2)
+    // vec3_assign(b.spare, b.acc)
     vec3_scale(b.spare, 1 / 60)
 
     // Apply change in velocity.
