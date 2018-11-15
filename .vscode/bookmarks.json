@@ -53,47 +53,47 @@
 				"label": "Player entity."
 			},
 			{
-				"line": 991,
+				"line": 993,
 				"column": 9,
 				"label": "Player movement."
 			},
 			{
-				"line": 1058,
+				"line": 1060,
 				"column": 0,
 				"label": "Player movement – arm."
 			},
 			{
-				"line": 1169,
+				"line": 1175,
 				"column": 0,
 				"label": "Player methods."
 			},
 			{
-				"line": 1253,
+				"line": 1259,
 				"column": 0,
 				"label": "Player pre-serve state."
 			},
 			{
-				"line": 1282,
+				"line": 1288,
 				"column": 0,
 				"label": "Player update."
 			},
 			{
-				"line": 1303,
+				"line": 1309,
 				"column": 0,
 				"label": "Player draw."
 			},
 			{
-				"line": 1386,
+				"line": 1393,
 				"column": 0,
 				"label": "Ball entity."
 			},
 			{
-				"line": 1511,
+				"line": 1518,
 				"column": 0,
 				"label": "Net entity."
 			},
 			{
-				"line": 1585,
+				"line": 1592,
 				"column": 0,
 				"label": "Court entity."
 			}

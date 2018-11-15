@@ -931,7 +931,8 @@ interface Player extends Actor {
 
   // Swing-related properties.
   swing_state: swing_state
-  swing_frames: number
+  swing_frames: number // This is kind of like power.
+  swing_power: number // Snapshot of swing_frames when transitioning into swing state.
 
   // Arm.
   arm_points: [Vec3, Vec3, Vec3, Vec3]
@@ -980,6 +981,7 @@ function player(
     target: vec3(),
     swing_frames: 0,
     ball_hit: false,
+    swing_power: 0,
   }
 
   if (is_initial_server) {
@@ -1081,6 +1083,7 @@ function player_move_arm(p: Player): void {
   const winding_speed = 5
   const swing_speed = -20
   const dist_per_frame = .06 * meter
+  const swing_power_max = 80
 
   // State transitions.
   if (p.swing_state === swing_state.idle && btn(button.x)) {
@@ -1096,9 +1099,11 @@ function player_move_arm(p: Player): void {
   // Update swing frames.
   if (p.swing_state === swing_state.idle) {
     p.swing_frames = min(p.swing_frames + idle_speed, 0)
+    p.swing_power = 0
   }
   if (p.swing_state === swing_state.winding) {
     p.swing_frames = min(p.swing_frames + winding_speed, max_swing_frames)
+    p.swing_power = min(p.swing_power + 2, swing_power_max)
   }
   if (p.swing_state === swing_state.swing) {
     p.swing_frames = max(p.swing_frames + swing_speed, min_swing_frames)
@@ -1139,7 +1144,8 @@ function player_move_arm(p: Player): void {
     vec3_add(chest_spare, p.pos, racket_head)
     const ball_hit = vec3_dist(chest_spare, ball) < 0.5 * meter
     if (ball_hit && p.swing_state === swing_state.swing) {
-      p.game.ball.vel.z = p.player_dir * 30 * meter
+      p.game.ball.vel.z = p.player_dir * abs(p.swing_power) * meter
+      printh('hit with ' + p.swing_power, 'test.log')
     }
   } else {
     // Then lerp towards idle configuration, keeping in mind the offset for swing frames.
@@ -1380,8 +1386,9 @@ function player_draw(p: Player): void {
     orderArray[i][1]()
   }
 
-  // Print swing state.
-  // print('swing state:' + p.swing_state)
+  // Debug.
+  print(p.swing_power)
+  // print(p.swing_state)
 }
 
 /**

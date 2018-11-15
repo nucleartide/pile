@@ -155,6 +155,7 @@ declare function ceil(x: number): number
 declare function sqrt(x: number): number
 declare function cos(x: number): number
 declare function sin(x: number): number
+declare function abs(x: number): number
 
 /**
  * Custom menu items.
