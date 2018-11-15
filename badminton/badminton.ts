@@ -1145,7 +1145,6 @@ function player_move_arm(p: Player): void {
     const ball_hit = vec3_dist(chest_spare, ball) < 0.5 * meter
     if (ball_hit && p.swing_state === swing_state.swing) {
       p.game.ball.vel.z = p.player_dir * abs(p.swing_power) * meter
-      printh('hit with ' + p.swing_power, 'test.log')
     }
   } else {
     // Then lerp towards idle configuration, keeping in mind the offset for swing frames.
@@ -1387,7 +1386,7 @@ function player_draw(p: Player): void {
   }
 
   // Debug.
-  print(p.swing_power)
+  // print(p.swing_power)
   // print(p.swing_state)
 }
 
